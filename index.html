@@ -1,0 +1,377 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Petualangan Teknisi Jaringan Kampus</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#e8eff6;--card:#fff;--tx:#12263f;--mu:#55657a;--bd:#b9c7d8;--ac:#0b7a75;--or:#d98a00;--ok:#1a7f45;--bt:#fff;--g1:#dbeafe;--gb1:#3b82f6;--g2:#dcfce7;--gb2:#22a35a;--g3:#fef3c7;--gb3:#d19a00;--g4:#fce7f3;--gb4:#d6458f;--g5:#ede9fe;--gb5:#7c5cd6;--g6:#ffedd5;--gb6:#e0752a;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1a2b;--card:#16283f;--tx:#e6eef8;--mu:#9db0c7;--bd:#38506f;--ac:#2cc4b8;--or:#ffb43a;--ok:#5ad88a;--bt:#0c1a2b;--g1:#16335a;--gb1:#6aa4ff;--g2:#14412c;--gb2:#4ade80;--g3:#4a3a0e;--gb3:#f5c542;--g4:#4d1f3a;--gb4:#f472b6;--g5:#33275c;--gb5:#a78bfa;--g6:#4d2c12;--gb6:#fb923c;}}
+:root[data-theme="dark"]{--bg:#0c1a2b;--card:#16283f;--tx:#e6eef8;--mu:#9db0c7;--bd:#38506f;--ac:#2cc4b8;--or:#ffb43a;--ok:#5ad88a;--bt:#0c1a2b;--g1:#16335a;--gb1:#6aa4ff;--g2:#14412c;--gb2:#4ade80;--g3:#4a3a0e;--gb3:#f5c542;--g4:#4d1f3a;--gb4:#f472b6;--g5:#33275c;--gb5:#a78bfa;--g6:#4d2c12;--gb6:#fb923c;}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,"Segoe UI",Arial,sans-serif}
+header{padding:16px 20px 0}h1{margin:0;font-size:24px}header p{margin:4px 0 10px;color:var(--mu)}
+#nav{display:flex;gap:10px 18px;flex-wrap:wrap}.ng{display:flex;flex-direction:column;gap:4px;padding:6px 10px 8px;border-radius:12px;color:var(--tx)}.ng1{background:var(--g1);border:2px solid var(--gb1);border-left-width:8px}.ng2{background:var(--g2);border:2px solid var(--gb2);border-left-width:8px}.ng3{background:var(--g3);border:2px solid var(--gb3);border-left-width:8px}.ng4{background:var(--g4);border:2px solid var(--gb4);border-left-width:8px}.ng5{background:var(--g5);border:2px solid var(--gb5);border-left-width:8px}.ng6{background:var(--g6);border:2px solid var(--gb6);border-left-width:8px}.gh{color:var(--tx)!important}.gh{font-size:13px;font-weight:700;color:var(--mu)}.gb{display:flex;gap:6px;flex-wrap:wrap}#nav button{width:38px;height:38px;padding:0;border-radius:50%;font-weight:700;cursor:pointer}
+#nav .cur{border-color:var(--ac);background:var(--ac);color:var(--bt)}#nav .dn{border-color:var(--ok)}#nav .dp{border-style:dashed}
+#bar{height:6px;background:var(--bd);border-radius:3px;margin:12px 0}#bar i{display:block;height:100%;width:0;background:var(--ok);border-radius:3px;transition:width .4s}
+main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,1fr);gap:16px;padding:0 20px 20px}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+#stage{width:100%;height:auto;display:block}
+.nd rect{fill:var(--bg);stroke:var(--bd);stroke-width:2}.ln{stroke:var(--bd);stroke-width:4}.ln.on{stroke:var(--ac)}
+svg text{fill:var(--tx);font-family:inherit}
+.pt rect{fill:var(--bg);stroke:var(--bd);stroke-width:3;cursor:pointer}.pt:hover rect{stroke:var(--ac)}#stage [data-k]:focus-visible{outline:3px solid var(--or);outline-offset:2px}#stage [data-k]:focus-visible rect{stroke:var(--or);stroke-width:4}
+aside h2{margin:0 0 4px;font-size:20px}aside p{margin:6px 0}
+.mi{background:var(--bg);border-left:4px solid var(--or);padding:8px 10px;border-radius:6px}.mi.done{border-color:var(--ok)}.mi.done::after{content:" ✅"}
+#ctl{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+button,input,select{font:inherit;padding:8px 12px;border-radius:10px;border:2px solid var(--bd);background:var(--card);color:var(--tx)}
+#ctl button,.pn button{cursor:pointer;background:var(--ac);color:var(--bt);border-color:var(--ac);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+#msg{min-height:3em;font-weight:600}#msg.ok{color:var(--ok)}#msg.bad{color:var(--or)}
+code{word-break:break-all;background:var(--bg);padding:2px 6px;border-radius:6px}
+.pn{display:flex;justify-content:space-between;margin-top:12px}
+#qz{margin-top:12px;border-top:1px solid var(--bd);padding-top:10px}#qz p{margin:4px 0}
+#qz .o,#out .o{display:block;width:100%;text-align:left;margin:6px 0;cursor:pointer}#qz .o.good,#out .o.good{border-color:var(--ok);font-weight:700}#qz .o.bad,#out .o.bad{border-color:var(--or);text-decoration:line-through}
+.box{overflow-x:auto}
+@media(max-width:640px){#stage{min-width:600px}svg text[font-size="11"],svg text[font-size="13"],svg text[font-size="14"],svg text[font-size="15"]{font-size:17px}}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}#ov[hidden]{display:none}
+#ov>div{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:12px;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:16px}#ov h2{margin:8px 0}
+.hb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.hb button{cursor:pointer}
+#wl{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30;overflow:auto}#wl[hidden]{display:none}#wlb{background:var(--card);border:1px solid var(--bd);border-radius:12px;max-width:640px;width:100%;padding:20px;max-height:100%;overflow:auto}#wlb h2{margin:0 0 8px}#wlb button[type=submit],#wlb>button{cursor:pointer;background:var(--ac);color:var(--bt);border-color:var(--ac);font-weight:700}#wlb form button{cursor:pointer}
+#gs{margin:4px 0 8px}#gs b{font-size:17px}#gx,#gw{color:var(--mu);margin-left:4px}#gbar{height:8px;background:var(--bd);border-radius:4px;margin-top:6px;max-width:420px}#gbar i{display:block;height:100%;width:0;background:var(--or);border-radius:4px;transition:width .4s}
+#tst{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--ac);color:var(--bt);padding:10px 16px;border-radius:12px;font-weight:700;z-index:40;max-width:92vw;box-shadow:0 4px 16px rgba(0,0,0,.3)}#tst[hidden]{display:none}
+#ovb .o{display:block;width:100%;text-align:left;margin:6px 0;cursor:pointer}#ovb .o.good{border-color:var(--ok);font-weight:700}#ovb .o.bad{border-color:var(--or);text-decoration:line-through}#ovb>div button,#ovb>button{cursor:pointer}
+#dvr{margin:6px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px}#dvr button{padding:4px 10px;cursor:pointer}
+.mi:empty{display:none}#sd{margin:0 6px}
+</style></head><body>
+<header><h1>🌐 Belajar Jaringan Komputer Dasar Berbasis Simulasi dan Interaktif</h1><p><b>Petualangan Teknisi Jaringan Kampus Cakrawala.</b> Kerjakan misi di setiap tahap. Bulatan bertanda ✓ berarti misinya selesai. Bulatan bergaris putus adalah tahap pendalaman (opsional); 21 tahap inti cukup untuk sekitar 85 menit. Catatan: alamat IP, angka kecepatan, dan latency di aplikasi ini adalah ilustrasi. Skor pertanyaan: <b id="sc">0/0</b>. Tidak ada batas waktu: kemajuan tersimpan otomatis di perangkat ini, jadi boleh dicicil.</p><div class="hb"><button id="dv">🧰 Galeri perangkat</button><button id="ib">⚡ Insiden</button><button id="sb">📜 Cerita wilayah</button><button id="bb">🏆 Pangkat dan lencana</button><button id="sm">📊 Ringkasan hasil</button><button id="gl">📖 Glosarium</button><button id="rs">Mulai ulang kemajuan</button><button id="pt">💰 Poin</button><button id="ad" hidden>🛠️ Admin</button><button id="cu">Keluar</button></div><div id="gs"><span id="gp"></span> <b id="sd" title="Saldo poin"></b> <b id="gr"></b> <span id="gx"></span> <span id="gw"></span><div id="gbar" aria-hidden="true"><i></i></div></div><nav id="nav" aria-label="Tahap simulasi"></nav><div id="bar"><i></i></div></header>
+<main><div class="box"><svg id="stage" viewBox="0 0 800 420" role="group" aria-label="Area simulasi"></svg></div>
+<aside class="box"><h2 id="tt"></h2><p id="lv" style="color:var(--mu);font-size:14px;margin:0"></p><p id="dd"></p><p id="mm" class="mi"></p><div id="dvr"></div><div id="ctl"></div><div id="msg" aria-live="polite"></div><div id="out" aria-live="polite"></div><div id="qz"></div><div class="pn"><button id="pv">← Sebelumnya</button><button id="nx">Lanjut →</button></div></aside></main>
+<div id="wl" hidden role="dialog" aria-modal="true" aria-labelledby="wlt"><div id="wlb"></div></div>
+<div id="tst" role="status" aria-live="polite" hidden></div>
+<div id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ovt"><div><button id="ovx">✕ Tutup</button><h2 id="ovt"></h2><div id="ovb"></div></div></div>
+<script>
+const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg',st=$('#stage'),ctl=$('#ctl'),msg=$('#msg'),out=$('#out');
+let I=0,TK=0;const done={};
+const E=(t,h)=>{const e=document.createElement(t);if(h!==undefined)e.innerHTML=h;return e};
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const say=(t,c)=>{msg.innerHTML=t;msg.className=c||''};
+const B=(t,f)=>{const b=E('button',t);b.onclick=f;ctl.append(b);return b};
+const IN=v=>{const i=E('input');i.value=v;ctl.append(i);return i};
+const SE=(o,v)=>{const s=E('select',o.map(x=>`<option>${x}</option>`).join(''));if(v)s.value=v;ctl.append(s);return s};
+const AL={mon:'Monitor',kb:'Keyboard dan mouse',cpu:'CPU dan RAM',hdd:'Penyimpanan',A:'Access point',S:'Switch',R:'Router',M:'Modem'};
+const svg=h=>{const a=document.activeElement,k=a&&st.contains(a)?a.dataset.k:null;st.innerHTML=h;
+ st.querySelectorAll('[data-p],[data-w],[data-n]').forEach(g=>{const d=g.dataset,v=d.p||d.w||d.n;g.dataset.k=(d.p?'p':d.w!==undefined?'w':'n')+v;g.tabIndex=0;g.setAttribute('role','button');g.setAttribute('aria-label',g.dataset.l||(d.p?AL[d.p]:d.w!==undefined?'Kawat posisi '+(+d.w+1):g.textContent.trim()))});
+ if(k){const e=st.querySelector(`[data-k="${k}"]`);if(e)e.focus()}};
+const nd=(x,y,ic,lb)=>`<g class="nd" transform="translate(${x},${y})"><rect x="-36" y="-28" width="72" height="56" rx="12"/><text y="9" text-anchor="middle" font-size="28">${ic}</text><text y="48" text-anchor="middle" font-size="13">${lb}</text></g>`;
+const ln=(a,b,on)=>`<line class="ln${on?' on':''}" x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;
+const T=(x,y,t,z)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor','middle');e.setAttribute('font-size',z||16);e.textContent=t;st.append(e);return e};
+const ok=()=>{if(!done[I]){done[I]=1;upd()}$('#mm').classList.add('done');showQ('c')};
+function fly(p,col,cb,lb,sp){const tk=TK,g=document.createElementNS(NS,'g');g.innerHTML=`<circle r="10" fill="${col||'var(--or)'}"/><text y="-15" text-anchor="middle" font-size="13" font-weight="700">${lb||''}</text>`;g.setAttribute('transform',`translate(${p[0]})`);st.append(g);let i=0,t0=0;
+ const f=ts=>{if(tk!=TK){g.remove();return}if(!t0)t0=ts;const a=p[i],b=p[i+1],d=Math.max(Math.hypot(b[0]-a[0],b[1]-a[1])/(sp||.5),1),k=Math.min((ts-t0)/d,1);g.setAttribute('transform',`translate(${a[0]+(b[0]-a[0])*k},${a[1]+(b[1]-a[1])*k})`);
+  if(k<1)requestAnimationFrame(f);else if(++i<p.length-1){t0=0;requestAnimationFrame(f)}else{g.remove();cb&&cb()}};requestAnimationFrame(f)}
+function path(ed,s,d){const adj={};ed.forEach(([a,b])=>{(adj[a]=adj[a]||[]).push(b);(adj[b]=adj[b]||[]).push(a)});const pv={[s]:null},q=[s];
+ while(q.length){const u=q.shift();if(u==d)break;(adj[u]||[]).forEach(v=>{if(!(v in pv)){pv[v]=u;q.push(v)}})}
+ if(!(d in pv))return null;const r=[];for(let u=d;u!==null;u=pv[u])r.unshift(u);return r}
+const L4='ABCD'.split('');
+const RAW=[
+{t:'1. Komputer tunggal',d:'Satu komputer memiliki input, proses, penyimpanan, dan output. Semua data hanya ada di dalam komputer itu.',m:'Misi: klik keempat bagian komputer, lalu coba kirim file ke komputer lain.',run(){
+ const P={mon:['Monitor (output)','menampilkan hasil kerja komputer.'],cpu:['CPU dan RAM (proses)','memproses data dan menjalankan program.'],hdd:['Penyimpanan','menyimpan file dan program secara permanen.'],kb:['Keyboard dan mouse (input)','memasukkan perintah dan data.']},seen=new Set();let tried=0;
+ const chk=()=>{if(seen.size==4&&tried)ok()};
+ svg(`<g data-p="mon" class="pt"><rect x="110" y="60" width="320" height="200" rx="14"/><rect x="126" y="76" width="288" height="168" rx="6" style="fill:var(--ac);opacity:.25"/><text x="270" y="170" text-anchor="middle" font-size="22">📄 Dokumen.docx</text><rect x="250" y="260" width="40" height="30"/><rect x="200" y="290" width="140" height="12" rx="6"/></g><g data-p="kb" class="pt"><rect x="120" y="330" width="260" height="46" rx="8"/><rect x="405" y="326" width="36" height="52" rx="18"/></g><g data-p="cpu" class="pt"><rect x="520" y="70" width="190" height="300" rx="14"/><rect x="545" y="215" width="140" height="70" rx="8"/><text x="615" y="258" text-anchor="middle" font-size="30">🧠</text></g><g data-p="hdd" class="pt"><rect x="545" y="100" width="140" height="70" rx="8"/><text x="615" y="145" text-anchor="middle" font-size="30">💾</text></g>`);
+ st.onclick=e=>{const g=e.target.closest('[data-p]');if(!g)return;const p=P[g.dataset.p];seen.add(g.dataset.p);say(`<b>${p[0]}</b>: ${p[1]} (${seen.size}/4)`);chk()};
+ B('📤 Kirim file ke komputer lain',()=>{tried=1;say('❌ Gagal: tidak ada kabel atau jaringan. Komputer ini terisolasi, datanya tidak dapat dibagikan.','bad');chk()})}},
+{t:'2. Dua komputer terhubung',d:'Dengan satu kabel LAN, dua komputer dapat berbagi informasi. Itulah jaringan paling sederhana. Pesan yang dikirim sebenarnya dipecah menjadi paket kecil (dibahas di tahap Aliran data).',m:'Misi: pasang kabel, lalu kirim pesan dari A ke B dan dari B ke A.',run(){
+ let on=0,bub=null;const dirs=new Set(),draw=()=>svg(`${on?ln([176,200],[624,200],1):''}${nd(140,200,'💻','Komputer A')}${nd(660,200,'💻','Komputer B')}`);draw();
+ const inp=IN('Halo!');inp.maxLength=30;
+ B('🔌 Pasang/lepas kabel',()=>{on^=1;bub=null;draw();say(on?'Kabel terpasang. Kedua komputer kini satu jaringan.':'Kabel dilepas.')});
+ const send=a=>{if(!on)return say('❌ Belum ada kabel: pesan tidak dapat sampai.','bad');const t=inp.value||'Halo!';fly(a?[[624,200],[176,200]]:[[176,200],[624,200]],0,()=>{bub&&bub.remove();bub=T(a?140:660,130,'💬 '+t,18);say(`✅ Pesan "${esc(t)}" diterima.`,'ok');dirs.add(a);if(dirs.size==2)ok()},'✉')};
+ B('A → B',()=>send(0));B('B → A',()=>send(1))}},
+{t:'3. Memasang kabel LAN',d:'Kabel LAN (UTP) berisi 8 kawat kecil. Urutan warna di konektor RJ45 harus mengikuti standar T568B agar kabel berfungsi. Alat yang dibutuhkan: kabel UTP, konektor RJ45, tang crimping, dan LAN tester (gambarnya ada di bawah misi).',m:'Misi: klik dua kawat untuk menukar posisinya sampai urutannya sama dengan standar T568B.',run(){
+ const C=['#e8691e','#e8691e','#2f9e55','#2f6fd6','#2f6fd6','#2f9e55','#8b5a2b','#8b5a2b'],W=[1,0,1,0,1,0,1,0],N=['Putih-Oranye','Oranye','Putih-Hijau','Biru','Putih-Biru','Hijau','Putih-Coklat','Coklat'];
+ let a=[0,1,2,3,4,5,6,7].sort(()=>Math.random()-.5),s=-1;
+ const w=(k,x,y,wd,h)=>`<rect x="${x}" y="${y}" width="${wd}" height="${h}" rx="3" fill="${C[k]}"/>${W[k]?`<rect x="${x+wd*.3}" y="${y}" width="${wd*.4}" height="${h}" fill="#f5f5f5"/>`:''}`;
+ const draw=()=>svg(`<text x="400" y="22" text-anchor="middle" font-size="14">Urutan T568B (target), pin 1 sampai 8</text>`+C.map((c,k)=>w(k,50+k*95,32,60,14)+`<text x="${80+k*95}" y="68" text-anchor="middle" font-size="11">${k+1}. ${N[k]}</text>`).join('')+`<rect x="70" y="110" width="660" height="250" rx="14" fill="none" stroke="var(--bd)" stroke-width="3"/>`+a.map((k,i)=>`<g data-w="${i}" style="cursor:pointer">${w(k,90+i*80,130,56,190)}<rect x="${90+i*80}" y="130" width="56" height="190" rx="3" fill="none" stroke="${i==s?'var(--or)':'none'}" stroke-width="5"/><text x="${118+i*80}" y="345" text-anchor="middle" font-size="14">pin ${i+1}</text></g>`).join(''));
+ draw();st.onclick=e=>{const g=e.target.closest('[data-w]');if(!g)return;const i=+g.dataset.w;if(s<0)s=i;else{[a[s],a[i]]=[a[i],a[s]];s=-1}draw()};
+ B('🔍 Periksa urutan',()=>{const n=a.filter((v,i)=>v==i).length;if(n==8){say('✅ Benar! Kabel siap di-crimp dan diuji. Kedua ujung memakai urutan yang sama (straight).','ok');ok()}else say(`Baru ${n} dari 8 kawat di posisi benar. Cocokkan dengan urutan target di atas.`,'bad')})}},
+{t:'4. Tiga komputer atau lebih: butuh switch',d:'Kartu LAN komputer hanya punya satu port, jadi tanpa switch komputer hanya dapat berpasangan. Switch menghubungkan banyak komputer dan mempelajari alamat MAC tiap port. Hub adalah perangkat lama yang menyalin setiap data ke semua port, sehingga semua PC menerima semua data, sedangkan switch hanya meneruskan ke port tujuan. Coba bandingkan keduanya di bawah. Catatan: pada switch sungguhan, tujuan yang belum dikenal disiarkan ke semua port dulu; simulasi ini menyederhanakannya.',m:'Misi: coba kirim PC A ke PC C tanpa switch (gagal). Pasang perangkat, ganti menjadi hub lalu kirim dan lihat siapa saja yang ikut menerima, kemudian ganti kembali ke switch dan kirim dua pesan.',run(){
+ const P={A:[130,90],B:[130,330],C:[670,90],D:[670,330],S:[400,210]};let sw=0,tab={},fail=0,cnt=0,hub=0,hubSeen=0;
+ const ed=()=>sw?L4.map(k=>[k,'S']):[['A','B'],['C','D']];
+ const draw=()=>{svg(ed().map(([a,b])=>ln(P[a],P[b],1)).join('')+L4.map(k=>nd(...P[k],'💻','PC '+k)).join('')+(sw?nd(...P.S,hub?'🔁':'🔀',hub?'Hub':'Switch'):''));if(sw&&hub)T(400,405,'Hub tidak punya tabel MAC: semua data disalin ke semua port',14);else if(sw)T(400,405,'Tabel MAC: '+(Object.entries(tab).map(([k,v])=>`PC ${k}→port ${v}`).join(', ')||'(masih kosong)'),14)};draw();
+ const s1=SE(L4),s2=SE(L4,'C');
+ B('🔀 Pasang/lepas switch',()=>{sw^=1;hub=0;tab={};draw();say(sw?'Semua PC kini terhubung ke switch.':'Perangkat dilepas; PC hanya berpasangan.')});
+ B('🔁 Ganti switch/hub',()=>{if(!sw)return say('Pasang dulu perangkat di tengah.','bad');hub^=1;tab={};draw();say(hub?'Perangkat diganti menjadi hub. Coba kirim dan lihat siapa yang menerima.':'Perangkat kembali menjadi switch.')});
+ B('Kirim',()=>{const a=s1.value,b=s2.value;if(a==b)return say('Pilih tujuan yang berbeda.','bad');const p=path(ed(),a,b);
+  if(!p){fail=1;return say(`❌ PC ${a} tidak punya jalur ke PC ${b}. Tanpa switch, tiap PC hanya dapat satu kabel.`,'bad')}
+  if(sw&&hub){const o=L4.filter(k=>k!=a);let n=0;fly([P[a],P.S],0,()=>{o.forEach(k=>fly([P.S,P[k]],'var(--or)',()=>{if(++n==o.length){hubSeen=1;say(`📢 Hub menyalin paket ke semua port: PC ${o.join(', ')} ikut menerimanya, padahal tujuannya hanya PC ${b}. PC lain dapat membaca data yang bukan untuknya. Bandingkan dengan switch.`,'bad')}},k==b?'✉':'👀'))},'✉');return}
+  fly(p.map(k=>P[k]),0,()=>{tab[a]=L4.indexOf(a)+1;draw();say(`✅ PC ${b} menerima paket dari PC ${a}. Switch mencatat PC ${a} di port ${tab[a]}.`,'ok');if(sw&&!hub&&fail&&hubSeen&&++cnt>=2)ok()},'✉')})}},
+{t:"5. Kebutuhan router",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"6. Kebutuhan modem",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"7. Kebutuhan ISP",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"8. Internet",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"9. Aliran data",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"10. Komunikasi data",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+null
+,
+{t:'Topologi jaringan',d:'Topologi adalah pola perangkat dirangkai. LAN mencakup satu gedung, WAN antarkota, WLAN adalah LAN nirkabel, MAN mencakup satu kota, dan PAN mencakup sekitar tubuh (misalnya Bluetooth). Bentuk topologi menentukan ketahanan jaringan saat ada perangkat yang rusak. Pada topologi bus, semua PC berbagi satu kabel utama sehingga yang rentan adalah kabelnya. Pada topologi bintang, pusatnya berupa switch (atau hub pada jaringan lama).',m:'Misi: pilih tiap topologi, lalu matikan satu perangkat (klik B, C, E, atau switch). Pada Bus, klik lingkaran oranye di kabel utama untuk memutusnya. Uji kirim di keempat topologi.',run(){
+ const n=['A','B','C','D','E'],P={H:[400,210]};n.forEach((k,i)=>P[k]=[400+150*Math.cos(i*1.2566-1.5708),210+150*Math.sin(i*1.2566-1.5708)]);
+ const TP={Bus:()=>n.slice(1).map((k,i)=>[n[i],k]),Bintang:()=>n.map(k=>[k,'H']),Cincin:()=>n.map((k,i)=>[k,n[(i+1)%5]]),Mesh:()=>n.flatMap((a,i)=>n.slice(i+1).map(b=>[a,b]))};
+ let tp='Bus';const off=new Set(),tested=new Set();
+ const ed=()=>tp=='Bus'?TP.Bus().filter((e,i)=>!off.has('G'+(i+1))):TP[tp]().filter(([a,b])=>!off.has(a)&&!off.has(b));
+ const X=[130,265,400,535,670],GX=[197,332,467,602];
+ const draw=()=>{if(tp=='Bus'){svg('<line class="ln on" x1="90" y1="210" x2="710" y2="210" style="stroke-width:8"/>'+X.map(x=>`<line class="ln on" x1="${x}" y1="178" x2="${x}" y2="210"/>`).join('')+n.map((k,i)=>nd(X[i],120,'💻','PC '+k)).join('')+GX.map((x,i)=>{const c=off.has('G'+(i+1));return `<g data-n="G${i+1}" data-l="Titik kabel ${i+1}: klik untuk ${c?'menyambung':'memutus'}" style="cursor:pointer">${c?`<rect x="${x-14}" y="198" width="28" height="24" style="fill:var(--card)"/><text x="${x}" y="219" text-anchor="middle" font-size="22" style="fill:var(--or)">✖</text>`:`<circle cx="${x}" cy="210" r="11" style="fill:var(--card);stroke:var(--or);stroke-width:3"/>`}</g>`}).join(''));T(400,262,'Satu kabel bersama (bus). Klik lingkaran oranye untuk memutus kabel.',15);return}draw0()};
+ const draw0=()=>svg(ed().map(([a,b])=>ln(P[a],P[b],1)).join('')+(tp=='Bintang'?[...n,'H']:n).map(k=>`<g data-n="${k}" style="cursor:pointer" opacity="${off.has(k)?.3:1}">${nd(...P[k],k=='H'?'🔀':'💻',k=='H'?'Switch':'PC '+k)}</g>`).join(''));draw();
+ const s=SE(Object.keys(TP));s.onchange=()=>{tp=s.value;off.clear();draw();say('')};
+ st.onclick=e=>{const g=e.target.closest('[data-n]');if(!g)return;const k=g.dataset.n;if(k=='A'||k=='D')return say('A dan D dipakai untuk uji kirim. Matikan perangkat lain.','bad');off.has(k)?off.delete(k):off.add(k);draw()};
+ B('Uji kirim A → D',()=>{const p=path(ed(),'A','D');if(off.size)tested.add(tp);const f=()=>{if(tested.size==4)ok()};
+  if(!p){say(`❌ Putus: pada topologi ${tp}, ${tp=='Bus'?'kabel utama yang putus':'kerusakan ini'} memutus jalur A ke D.`,'bad');f()}else fly(tp=='Bus'?[[X[0],120],[X[0],210],[X[3],210],[X[3],120]]:p.map(k=>P[k]),0,()=>{say(`✅ Pesan sampai${off.size?' meski ada gangguan':''}.`,'ok');f()},'✉')})}},
+{t:'Wi-Fi (WLAN)',d:'WLAN adalah LAN tanpa kabel: perangkat tersambung ke access point lewat gelombang radio. Semakin jauh dan banyak penghalang, sinyal melemah dan kecepatan turun.',m:'Misi: geser jarak laptop sampai sinyal hilang, lalu dekatkan lagi sampai sinyal penuh.',run(){
+ let d=200,pw=0,weak=0;const sg=()=>Math.max(0,4-Math.floor((d-60)/150)),chk=()=>{if(weak&&sg()==4)ok()};
+ const draw=()=>{const g=sg(),x=100+d*.9;svg(`<circle cx="100" cy="200" r="170" fill="none" stroke="var(--bd)" stroke-dasharray="6 6"/><circle cx="100" cy="200" r="400" fill="none" stroke="var(--bd)" stroke-dasharray="6 6"/>`+nd(100,200,'📡','Access point')+nd(x,200,g?'💻':'❌','Laptop')+(pw?`<text x="${x}" y="150" text-anchor="middle" font-size="22">🔒</text>`:''));T(400,380,g?`Sinyal ${'▂▄▆█'.slice(0,g)} · kecepatan sekitar ${[0,5,20,60,150][g]} Mbps (ilustrasi)`:'Sinyal hilang: laptop tidak tersambung',16)};draw();
+ const r=E('input');r.type='range';r.min=80;r.max=700;r.value=d;r.setAttribute('aria-label','Jarak laptop dari access point');r.oninput=()=>{d=+r.value;draw();if(!sg())weak=1;chk()};ctl.append(r);
+ }},
+{t:'Alamat MAC dan IP, serta DHCP',d:'MAC adalah identitas tetap kartu jaringan. IP adalah alamat logis yang bergantung pada jaringan. DHCP membagikan IP otomatis lewat empat langkah: Discover, Offer, Request, ACK. Catatan: Discover sebenarnya dikirim secara broadcast karena perangkat belum punya IP; di gambar disederhanakan menjadi satu garis.',m:'Misi: sambungkan tiga perangkat dan amati DHCP memberi IP berbeda untuk MAC yang berbeda.',run(){
+ const D=['💻 Laptop','📱 HP','🖨️ Printer'],mc=D.map(()=>Array.from({length:6},()=>Math.floor(Math.random()*256).toString(16).padStart(2,'0')).join(':')),lb=['Discover','Offer','Request','ACK'];let g=0,bz=0;
+ const draw=()=>{svg(ln([146,160],[644,160],1)+nd(110,160,g<3?D[g].slice(0,2):'💻','Perangkat baru')+nd(680,160,'📡','Router (DHCP)'));for(let j=0;j<g;j++)T(400,250+j*30,`${D[j]} · MAC ${mc[j]} → IP 192.168.1.${10+j}`,15)};draw();
+ const step=(i,f)=>i>3?f():fly(i%2?[[644,160],[146,160]]:[[146,160],[644,160]],i%2?'var(--ac)':0,()=>{say(`${i+1}/4 · ${lb[i]}`);step(i+1,f)},lb[i]);
+ B('➕ Sambungkan perangkat',()=>{if(bz||g>=3)return;bz=1;draw();step(0,()=>{g++;draw();say(`✅ ${D[g-1]} mendapat IP 192.168.1.${9+g} dari DHCP. MAC-nya tetap ${mc[g-1]}.`,'ok');bz=0;if(g==3)ok()})})}},
+{t:"Subnetting dasar",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"Model berlapis: OSI dan TCP/IP",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"Kinerja jaringan: bandwidth, latency, throughput",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+null,
+null,
+{t:"Pusat data dan konektivitas cloud",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}}
+,
+{t:'ARP dan broadcast',d:'Untuk mengirim ke sebuah IP di jaringan yang sama, komputer harus tahu MAC-nya. Ia bertanya ke semua perangkat lewat broadcast (ARP request) dan hanya pemilik IP itu yang menjawab (ARP reply). Hasilnya disimpan di tabel ARP agar tidak perlu bertanya lagi.',m:'Misi: kirim ke sebuah IP dan amati broadcast, lalu kirim lagi ke IP yang sama dan lihat bahwa broadcast tidak diperlukan.',run(){
+ const P={A:[130,90],B:[130,330],C:[670,90],D:[670,330],S:[400,210]},IP={A:10,B:11,C:12,D:13};let cache={},bz=0,twice=0;
+ const draw=()=>{svg(L4.map(k=>ln(P[k],P.S,1)).join('')+L4.map(k=>nd(...P[k],'💻','192.168.1.'+IP[k])).join('')+nd(...P.S,'🔀','Switch'));T(400,410,'Tabel ARP PC A: '+(Object.keys(cache).map(k=>`.${IP[k]}→MAC ${k}`).join(', ')||'(kosong)'),14)};draw();
+ const d=SE(['B','C','D']);
+ B('Kirim dari A',()=>{if(bz)return;bz=1;const t=d.value;
+  if(cache[t]){fly([P.A,P.S,P[t]],0,()=>{say(`✅ A sudah tahu MAC PC ${t} dari tabel ARP, jadi langsung mengirim tanpa broadcast.`,'ok');bz=0;if(twice)ok()},'✉');return}
+  say(`📢 ARP request: "Siapa pemilik 192.168.1.${IP[t]}?" dikirim ke semua perangkat (broadcast).`);let n=0;
+  ['B','C','D'].forEach(k=>fly([P.A,P.S,P[k]],'var(--or)',()=>{if(++n==3)fly([P[t],P.S,P.A],'var(--ac)',()=>{cache[t]=1;draw();say(`📨 ARP reply: hanya PC ${t} menjawab dengan MAC-nya. Kini A dapat mengirim data.`);bz=0;twice=1},'MAC')},'?'))})}},
+{t:"IP privat, IP publik, dan NAT",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"Port dan layanan",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"TCP vs UDP",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"Tabel routing dan default gateway",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:'Client-server dan peer-to-peer',d:'Pada peer-to-peer (P2P), setiap komputer boleh meminta dan memberi data, seperti dua komputer yang berbagi file. Pada client-server, satu server khusus melayani banyak client, seperti situs web dan email. Bila server mati, semua client terganggu. Garis pada gambar menunjukkan hubungan logis, bukan jumlah kabel fisik.',m:'Misi: kirim data di mode P2P dan client-server, lalu matikan server dan amati dampaknya.',run(){
+ const P={A:[130,90],B:[130,330],C:[670,90],D:[670,330],S:[400,210]};let cs=0,off=0;const r=new Set();
+ const ed=()=>cs?(off?[]:L4.map(k=>[k,'S'])):L4.flatMap((a,i)=>L4.slice(i+1).map(b=>[a,b]));
+ const draw=()=>svg(ed().map(([a,b])=>ln(P[a],P[b],1)).join('')+L4.map(k=>nd(...P[k],'💻',(cs?'Client ':'Peer ')+k)).join('')+(cs?`<g opacity="${off?.3:1}">${nd(...P.S,'🖥️','Server')}</g>`:''));draw();
+ const md=SE(['Peer-to-peer','Client-server']);md.onchange=()=>{cs=md.value=='Client-server'?1:0;off=0;draw();say('')};
+ B('⏻ Matikan/nyalakan server',()=>{if(!cs)return say('Mode peer-to-peer tidak memakai server.');off^=1;draw()});
+ B('Kirim dari A',()=>{const p=path(ed(),'A',cs?'S':'C');
+  if(!p){r.add('off');say('❌ Server mati: semua client tidak dapat meminta layanan.','bad');if(r.size==3)ok();return}
+  fly(p.map(k=>P[k]),0,()=>{r.add(cs?'cs':'p2p');say(cs?'✅ Client meminta data ke server, dan server melayani.':'✅ A langsung bertukar data dengan C tanpa server.','ok');if(r.size==3)ok()},'✉')})}},
+{t:"Pemecahan masalah: ping dan traceroute",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}}
+,
+{t:'Struktur alamat IP',d:'Alamat IPv4 terdiri dari 4 angka (oktet) 0 sampai 255, yaitu 32 bit. Sebagian bit pertama adalah bagian jaringan (seperti nama jalan) dan sisanya bagian host (seperti nomor rumah). Semua bit host 0 adalah alamat jaringan dan semua bit host 1 adalah broadcast; keduanya tidak dipakai perangkat.',m:'Misi: pilih prefix /24, lalu coba angka terakhir 0, 255, dan satu angka biasa untuk melihat mana yang boleh dipakai perangkat.',run(){
+ const last=IN('10'),pf=SE(['/8','/16','/24'],'/16'),seen=new Set(),s4=n=>[n>>>24,(n>>>16)&255,(n>>>8)&255,n&255].join('.');last.type='number';last.min=0;last.max=255;last.setAttribute('aria-label','Angka terakhir (host)');
+ const render=()=>{const L=Math.floor(+last.value),p=parseInt(pf.value.slice(1));if(!(L>=0&&L<=255))return say('Isi angka 0 sampai 255.','bad');
+  const ip=[192,168,1,L],n=((192*256+168)*256+1)*256+L,m=(0xFFFFFFFF<<(32-p))>>>0,na=(n&m)>>>0,bc=(na|~m)>>>0,bits=ip.map(x=>x.toString(2).padStart(8,'0')).join(''),xe=59+p*20+Math.floor((p-1)/8)*14-2;
+  svg(ip.map((x,i)=>`<text x="${138+i*174}" y="90" text-anchor="middle" font-size="40" font-weight="700">${x}</text>`).join('')+bits.split('').map((b,i)=>`<rect x="${59+i*20+Math.floor(i/8)*14}" y="130" width="18" height="30" rx="3" style="fill:var(--card);stroke:${i<p?'var(--ac)':'var(--or)'};stroke-width:3"/><text x="${68+i*20+Math.floor(i/8)*14}" y="151" text-anchor="middle" font-size="13">${b}</text>`).join('')+`<path d="M59 178H${xe}" stroke="var(--ac)" stroke-width="4"/><path d="M${xe+4} 178H739" stroke="var(--or)" stroke-width="4"/><text x="${(59+xe)/2}" y="204" text-anchor="middle" font-size="15">Jaringan (${p} bit)</text><text x="${(xe+739)/2}" y="204" text-anchor="middle" font-size="15">Host (${32-p} bit)</text>`);
+  T(400,260,`Alamat jaringan ${s4(na)} · broadcast ${s4(bc)} · jumlah host ${2**(32-p)-2}`,15);
+  const sx=n==na?'Alamat jaringan (semua bit host 0): tidak boleh dipakai perangkat.':n==bc?'Alamat broadcast (semua bit host 1): untuk menyapa semua perangkat, tidak dipakai perangkat.':'Alamat host biasa: boleh dipakai perangkat.';
+  say(sx,n==na||n==bc?'bad':'ok');if(p==24)seen.add(n==na?'net':n==bc?'bc':'host');if(seen.size==3)ok()};
+ last.oninput=render;pf.onchange=render;render()}},
+{t:"Kotak di rumah Anda",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"DNS: buku telepon internet",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}}
+,
+{t:"Coba di perangkat Anda",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}},
+{t:"Perjalanan satu klik: dari HP sampai server",d:'Tahap ini berada di wilayah berbayar. Buka wilayahnya dengan poin untuk mengakses simulasi, misi, dan pertanyaannya.',m:'',locked:1,run(){window.lockUI&&window.lockUI()}}
+];
+const CORE=new Set([0,1,12,13,27,3,20,4,6,5,28,22,21,29,7,8,23,9,26,30,31]),ORD=[0,1,2,12,13,27,3,11,20,25,4,24,14,6,5,28,22,21,29,7,8,23,9,15,16,19,26,30,31],ST=ORD.map(i=>({...RAW[i],core:CORE.has(i),id:i}));
+const QZ={
+0:['p','Jika komputer tidak punya kabel atau jaringan, apakah filenya dapat dikirim ke komputer lain?',['Dapat, lewat udara','Tidak dapat'],1,'Tanpa jalur penghubung, komputer terisolasi.'],
+1:['p','Dua komputer dihubungkan satu kabel LAN. Bisakah A mengirim pesan ke B?',['Ya','Tidak, harus lewat internet'],0,'Satu kabel sudah membentuk jaringan sederhana.'],
+2:['c','Mengapa urutan warna kawat harus tepat?',['Hanya agar rapi','Tiap pin punya tugas kirim atau terima','Agar kabel lebih panjang'],1,'Pin tertentu dipakai untuk mengirim, pin lain untuk menerima.'],
+12:['c','Apa yang terjadi bila perangkat makin jauh dari access point?',['Sinyal melemah dan kecepatan turun','Kecepatan naik','Tidak berubah'],0,'Sinyal radio melemah seiring jarak dan penghalang.'],
+13:['c','Mana yang berubah ketika perangkat pindah ke jaringan lain?',['Alamat MAC','Alamat IP'],1,'MAC melekat pada perangkat keras, sedangkan IP diberikan oleh jaringan (DHCP).'],
+27:['c','Pada prefix /24, alamat 192.168.1.255 termasuk apa?',['Host biasa','Alamat jaringan','Broadcast'],2,'Semua bit host bernilai 1, itulah alamat broadcast.'],
+3:['p','Tiga PC ingin saling berkomunikasi. Apa yang paling tepat dipasang?',['Tiga kabel, satu untuk tiap pasangan PC','Satu switch','Satu modem'],1,'Switch menghubungkan banyak PC lewat satu titik pusat.'],
+11:['c','Pada topologi bintang, apa yang terjadi bila switch pusat mati?',['Semua PC terputus','Hanya satu PC putus','Tidak ada pengaruh'],0,'Semua jalur melewati titik pusat.'],
+20:['c','Apa fungsi ARP?',['Mengubah nama situs menjadi IP','Mencari MAC dari sebuah IP','Membagi IP otomatis'],1,'DNS mengubah nama ke IP, ARP mengubah IP ke MAC, DHCP membagi IP.'],
+25:['c','Apa yang terjadi pada client bila server mati?',['Tetap dilayani','Tidak dapat meminta layanan'],1,'Client bergantung pada server, berbeda dengan P2P.'],
+4:null,
+24:null,
+14:null,
+6:null,
+5:null,
+28:null,
+22:null,
+21:null,
+29:null,
+7:null,
+8:null,
+23:null,
+9:null,
+15:null,
+16:null,
+26:null,
+19:null,
+30:null,
+31:null},qa={};
+function showQ(t){const id=ST[I].id,q=QZ[id],bx=$('#qz');if(!q||q[0]!=t)return;
+ const dr=()=>{const a=qa[id];bx.innerHTML=`<p><b>${t=='p'?'🔮 Prediksi dulu, lalu buktikan di simulasi:':'🧠 Cek pemahaman:'}</b></p><p>${q[1]}</p>`;
+  q[2].forEach((o,k)=>{const b=E('button',o);b.className='o'+(a&&k==q[3]?' good':a&&k==a.c?' bad':'');b.onclick=()=>{if(!qa[id]){qa[id]={c:k,ok:k==q[3]};dr();const v=Object.values(qa);$('#sc').textContent=v.filter(x=>x.ok).length+'/'+v.length;save()}};bx.append(b)});
+  if(a)bx.append(E('p',(a.ok?'✅ Tepat. ':'❌ Belum tepat. ')+q[4]))};dr()}
+const PH=[['1. Dasar',[0,1,2,12]],['2. Jaringan lokal',[13,27,3,11,20,25]],['3. Antarjaringan',[4,24,14]],['4. Keluar ke internet',[6,5,28,22,21,29,7]],['5. Data bergerak',[8,23,9,15,16,19]],['6. Praktik dan penutup',[26,30,31]]];
+const NV=$('#nav'),NB=[],PHN=[];ST.forEach((s,i)=>{PHN[i]=PH.find(p=>p[1].includes(s.id))[0]});PH.forEach(([n,ids],gi)=>{const g=E('div');g.className='ng ng'+(gi+1);g.setAttribute('role','group');g.setAttribute('aria-label','Kelompok '+n);const h=E('span');h.className='gh';h.textContent=n;g.append(h);const w=E('div');w.className='gb';ids.forEach(id=>{const i=ST.findIndex(x=>x.id==id);const b=E('button',i+1);b.title=s_t(i);b.onclick=()=>go(i);NB[i]=b;w.append(b)});g.append(w);NV.append(g)});function s_t(i){return ST[i].t.replace(/^\d+\. /,'')}
+function upd(){NB.forEach((b,i)=>{b.className=(i==I?'cur ':'')+(done[i]?'dn ':'')+(ST[i].core?'':'dp');b.textContent=done[i]?'✓':(ST[i].locked?'🔒':i+1);b.setAttribute('aria-label',`Tahap ${i+1}: ${ST[i].t.replace(/^\d+\. /,'')}${done[i]?' (selesai)':''}${ST[i].core?'':' (pendalaman)'}${ST[i].locked?' (terkunci)':''}`);b.setAttribute('aria-current',i==I?'step':'false')});$('#bar i').style.width=Object.keys(done).length/ST.length*100+'%';save();if(typeof gUpd=='function')gUpd()}
+function go(i){if(i<0||i>=ST.length)return;TK++;I=i;st.onclick=null;st.innerHTML='';ctl.innerHTML=out.innerHTML='';say('');const s=ST[i];$('#tt').textContent=(i+1)+'. '+s.t.replace(/^\d+\. /,'');$('#dd').textContent=s.d;$('#lv').textContent=PHN[i]+' · '+(s.core?'● Tahap inti · sekitar 4 menit':'○ Pendalaman (opsional) · sekitar 5 menit');$('#mm').textContent=s.m;$('#mm').className='mi'+(done[i]?' done':'');$('#pv').disabled=i==0;$('#nx').disabled=i==ST.length-1;$('#qz').innerHTML='';s.run();upd();showQ('p');if(done[i])showQ('c');if(typeof gAfterGo=='function')gAfterGo()}
+$('#pv').onclick=()=>go(I-1);$('#nx').onclick=()=>go(I+1);
+st.addEventListener('keydown',e=>{if((e.key=='Enter'||e.key==' ')&&e.target.dataset&&e.target.dataset.k){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+let KEY=null,gm={seen:{},inc:{}},SV={};
+function payload(){return{v:2,d:Object.fromEntries(Object.keys(done).map(p=>[ST[p].id,1])),q:qa,ci:ST[I].id,g:gm}}
+function save(){if(!KEY)return;const p=payload();try{localStorage.setItem(KEY,JSON.stringify(p))}catch(e){}if(window.cloudSave)window.cloudSave(p)}
+function restore(sv){for(const k in done)delete done[k];for(const k in qa)delete qa[k];gm={seen:{},inc:{}};sv=sv||{};
+ Object.keys(sv.d||{}).map(Number).forEach(id=>{const p=ST.findIndex(x=>x.id==id);if(p>=0)done[p]=1});Object.assign(qa,sv.q||{});if(sv.g)gm={seen:sv.g.seen||{},inc:sv.g.inc||{}};
+ const v=Object.values(qa);$('#sc').textContent=v.filter(x=>x.ok).length+'/'+v.length;return sv}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){save();if(window.cloudFlush)window.cloudFlush()}});window.addEventListener('pagehide',()=>{if(window.cloudFlush)window.cloudFlush()});
+let rt=0;$('#rs').onclick=function(){if(!rt){rt=1;this.textContent='Yakin? Klik lagi untuk menghapus';setTimeout(()=>{rt=0;this.textContent='Mulai ulang kemajuan'},4000);return}
+ for(const k in done)delete done[k];for(const k in qa)delete qa[k];gm={seen:{},inc:{}};if(typeof gReset=='function')gReset();rt=0;this.textContent='Mulai ulang kemajuan';$('#sc').textContent='0/0';go(0)};
+const OV=$('#ov'),OB=$('#ovb'),OT=$('#ovt');let lastF=null;
+function openOv(t,fn){lastF=document.activeElement;OT.textContent=t;OB.innerHTML='';fn(OB);OV.hidden=false;$('#ovx').focus()}
+function closeOv(){OV.hidden=true;if(lastF&&lastF.focus)lastF.focus()}
+$('#ovx').onclick=closeOv;OV.addEventListener('click',e=>{if(e.target===OV)closeOv()});
+document.addEventListener('keydown',e=>{if(OV.hidden)return;if(e.key=='Escape')return closeOv();if(e.key=='Tab'){const f=[...OV.querySelectorAll('button,input,textarea')].filter(x=>!x.disabled);if(!f.length)return;const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement==a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement==z){e.preventDefault();a.focus()}}});
+
+const nm=p=>ST[p].t.replace(/^\d+\. /,''),pos=id=>ST.findIndex(s=>s.id==id);
+function sumData(){const v=Object.values(qa);return{tot:ST.length,dn:Object.keys(done).length,core:ST.filter(s=>s.core).length,cd:ST.filter((s,i)=>s.core&&done[i]).length,sc:v.filter(x=>x.ok).length,nq:v.length,
+ redo:ST.map((s,i)=>i).filter(i=>(qa[ST[i].id]&&!qa[ST[i].id].ok)||(ST[i].core&&!done[i])).map(i=>(i+1)+'. '+nm(i))}}
+function sumText(){const d=sumData(),L=['Ringkasan Belajar Jaringan Komputer Dasar (Petualangan Teknisi Jaringan Kampus)'];if(PROF)L.push('Nama: '+PROF.n,'Email: '+PROF.e);
+ L.push('Tanggal: '+new Date().toLocaleString('id-ID'),`Tahap selesai: ${d.dn}/${d.tot} (inti ${d.cd}/${d.core})`,`Skor pertanyaan: ${d.sc}/${d.nq}`);if(typeof gSum=='function')L.push(...gSum());
+ PH.forEach(([n,ids])=>{L.push('',n);ids.forEach(id=>{const p=pos(id);L.push(`  ${done[p]?'[v]':'[ ]'} ${p+1}. ${nm(p)}${ST[p].core?'':' (pendalaman)'}${qa[id]?(qa[id].ok?' - pertanyaan benar':' - pertanyaan salah'):''}`)})});
+ L.push('','Perlu diulang: '+(d.redo.join('; ')||'tidak ada'));return L.join('\n')}
+$('#sm').onclick=()=>openOv('Ringkasan hasil',b=>{const d=sumData();
+ const prog=E('p',`<b>${d.dn}/${d.tot}</b> tahap selesai (inti <b>${d.cd}/${d.core}</b>) · skor pertanyaan <b>${d.sc}/${d.nq}</b>${typeof gLine=='function'?' · '+esc(gLine()):''}`);
+ const ph=E('p',PH.map(([n,ids])=>`${esc(n)}: <b>${ids.filter(id=>done[pos(id)]).length}/${ids.length}</b>`).join(' · '));
+ const rd=E('p',d.redo.length?'<b>Perlu diulang:</b> '+d.redo.map(esc).join('; '):'<b>Semua tahap inti selesai dan semua pertanyaan benar.</b>');
+ const ta=E('textarea');ta.readOnly=true;ta.rows=12;ta.setAttribute('aria-label','Teks ringkasan');ta.style.cssText='width:100%;margin-top:8px;font:13px/1.4 ui-monospace,Consolas,monospace;background:var(--bg);color:var(--tx);border:2px solid var(--bd);border-radius:10px;padding:8px';
+ ta.value=sumText();
+ const cp=E('button','📋 Salin ringkasan');cp.style.marginTop='8px';
+ cp.onclick=()=>{ta.select();const ok2=()=>{cp.textContent='✅ Tersalin'},bad2=()=>{cp.textContent='Tekan Ctrl+C untuk menyalin'};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(ok2,()=>{try{document.execCommand('copy')?ok2():bad2()}catch(e){bad2()}})}else{document.execCommand('copy')?ok2():bad2()}}catch(e){bad2()}};
+ b.append(prog,ph,rd,ta,cp)});
+const GL=[['Access point','Perangkat yang memancarkan Wi-Fi dan menghubungkan perangkat nirkabel ke jaringan kabel.'],['Alamat IP','Alamat logis perangkat di jaringan; bergantung pada jaringan tempat perangkat berada.'],['Alamat MAC','Identitas perangkat keras kartu jaringan, dipakai di jaringan lokal.'],['ARP','Protokol untuk mencari alamat MAC dari sebuah alamat IP di jaringan yang sama.'],['Bandwidth','Kapasitas maksimum jalur, diukur dalam Mbps.'],['Bit dan byte','Bit adalah satuan data terkecil (0 atau 1); 1 byte = 8 bit. File diukur dalam byte, kecepatan jaringan dalam bit per detik.'],['Broadcast','Pesan yang ditujukan ke semua perangkat di satu jaringan.'],['Client','Perangkat yang meminta layanan, misalnya browser di HP Anda.'],['Cloud','Layanan komputasi dan penyimpanan yang dijalankan di pusat data milik penyedia.'],['Default gateway','Alamat router tempat perangkat menitipkan paket yang tujuannya di luar jaringan lokal.'],['DHCP','Layanan yang membagikan alamat IP otomatis ke perangkat yang baru tersambung.'],['DNS','Layanan yang menerjemahkan nama situs menjadi alamat IP.'],['Frame','Satuan data di lapis akses jaringan (Ethernet atau Wi-Fi).'],['HTTP dan HTTPS','Protokol untuk meminta dan mengirim halaman web. HTTPS adalah versi yang datanya dienkripsi (dibahas di materi keamanan).'],['Hub','Perangkat jaringan lama yang menyalin setiap data ke semua port, sehingga semua perangkat menerima semua data. Kini digantikan switch.'],['Hop','Satu lompatan paket dari satu router ke router berikutnya.'],['ISP','Penyedia layanan internet yang menyediakan jalur dari rumah ke internet.'],['Latency','Waktu tempuh paket, diukur dalam milidetik.'],['LAN, WLAN, MAN, WAN, PAN','LAN: jaringan satu gedung. WLAN: LAN nirkabel. MAN: satu kota. WAN: antarkota atau lebih luas. PAN: sekitar tubuh, misalnya Bluetooth.'],['Modem','Perangkat yang menerjemahkan sinyal digital agar cocok dengan jalur ISP.'],['NAT','Penerjemahan banyak IP privat menjadi satu IP publik oleh router.'],['Packet loss (paket hilang)','Paket yang tidak sampai di tujuan, dinyatakan dalam persen.'],['Paket','Potongan kecil data yang dikirim lewat jaringan beserta alamat tujuannya.'],['Peer-to-peer (P2P)','Model ketika setiap komputer boleh meminta dan memberi data tanpa server khusus.'],['Ping','Perintah untuk memeriksa apakah tujuan menjawab dan berapa lama jawabannya.'],['Port','Nomor yang menunjuk layanan tertentu pada sebuah komputer, misalnya 80 untuk web dan 53 untuk DNS.'],['Prefix (misalnya /24)','Jumlah bit pertama alamat IP yang menjadi bagian jaringan.'],['Protokol','Aturan komunikasi antarperangkat.'],['Router','Perangkat yang meneruskan paket antarjaringan.'],['Rute default','Jalan keluar bagi tujuan yang tidak ada di tabel routing, biasanya menuju ISP.'],['Server','Komputer yang melayani permintaan banyak client.'],['Subnet','Pembagian jaringan IP menjadi jaringan yang lebih kecil.'],['Switch','Perangkat yang menghubungkan banyak komputer dalam satu jaringan dan meneruskan frame berdasarkan MAC.'],['Tabel routing','Daftar yang dipakai router untuk memilih jalur menurut alamat tujuan.'],['TCP','Protokol andal: paket diurutkan dan paket yang hilang dikirim ulang.'],['Throughput','Kecepatan data yang benar-benar sampai.'],['Topologi','Pola rangkaian perangkat, misalnya bus, bintang, cincin, dan mesh.'],['Traceroute','Perintah yang menampilkan router yang dilewati paket menuju tujuan.'],['UDP','Protokol cepat tanpa jaminan: paket yang hilang tidak dikirim ulang.']].sort((a,b)=>a[0].localeCompare(b[0],'id'));
+$('#gl').onclick=()=>openOv('Glosarium',b=>{const f=E('input');f.type='search';f.placeholder='Cari istilah...';f.setAttribute('aria-label','Cari istilah');f.style.width='100%';const l=E('dl');
+ const r=()=>{const q=f.value.toLowerCase();l.innerHTML=GL.filter(x=>(x[0]+' '+x[1]).toLowerCase().includes(q)).map(x=>`<dt style="font-weight:700;margin-top:8px">${esc(x[0])}</dt><dd style="margin:0 0 0 12px">${esc(x[1])}</dd>`).join('')||'<p>Istilah tidak ditemukan.</p>'};f.oninput=r;r();b.append(f,l)});
+go(0);
+</script>
+<script>
+(()=>{
+const REG=[
+{n:'Dasar',pl:'Laboratorium Komputer',ic:'🖥️',bd:'Perakit Handal',bdd:'Menyelesaikan semua tahap inti wilayah Dasar.',
+ st:'Alice, Kepala TI Kampus Cakrawala, membawa Anda ke Laboratorium Komputer. Sebuah komputer berdiri sendirian di meja: pintar, tetapi tidak dapat bicara dengan siapa pun. "Semua jaringan besar dimulai dari sini," katanya. Tugas Anda: kenali isi sebuah komputer, hubungkan dua komputer, pasang kabel LAN, lalu lepaskan kabel dan beralih ke Wi-Fi.',
+ inc:{t:'Dua komputer yang tak mau bicara',s:'Dua PC di laboratorium sudah disambung dengan satu kabel, tetapi PC A tidak dapat mengirim apa pun ke PC B. Bob, penjaga laboratorium, meminta Anda mencari penyebabnya. Jalankan alat diagnosis, lalu tentukan diagnosis.',
+  tools:[['Cek lampu port jaringan','Lampu link di kedua PC mati, padahal kabel terpasang.'],['Cek alamat IP kedua PC','PC A: 192.168.1.10/24. PC B: 192.168.1.11/24. Keduanya berada di jaringan yang sama.'],['Periksa konektor kabel','Di ujung PC B, klip konektor RJ45 patah dan kawat tembaga terlihat longgar.'],['Cek pengaturan DNS','Tidak dipakai: kedua PC saling mengakses lewat alamat IP, bukan nama.']],
+  o:['Alamat IP kedua PC bentrok','Kabel atau konektor fisik bermasalah','Server DNS tidak menjawab','Router belum punya rute'],a:1,
+  x:'Lampu link mati berarti sinyal tidak sampai ke ujung kabel, jadi masalahnya ada di lapis fisik. IP sudah satu jaringan dan DNS atau router tidak terlibat. Aturan emas diagnosis: periksa yang paling bawah dulu (kabel dan lampu), baru naik ke pengaturan.'}},
+{n:'Jaringan lokal',pl:'Gedung Perpustakaan',ic:'📚',bd:'Penjinak DHCP',bdd:'Menyelesaikan semua tahap inti wilayah Jaringan lokal.',
+ st:'Perpustakaan punya puluhan komputer dan Wi-Fi, tetapi antrean keluhan panjang. Alice: "Di dalam satu gedung, setiap perangkat harus punya alamat, tahu cara mencari tetangganya, dan dihubungkan oleh perangkat yang tepat." Anda akan mempelajari alamat MAC dan IP, DHCP, switch (dan hub), topologi, serta ARP.',
+ inc:{t:'Wi-Fi penuh, web kosong',s:'Seorang mahasiswa mengeluh: laptopnya menunjukkan Wi-Fi terhubung dengan sinyal penuh, tetapi tidak ada halaman web yang terbuka. Cari penyebabnya.',
+  tools:[['Cek kekuatan sinyal Wi-Fi','Sinyal kuat, tersambung ke jaringan "Perpus-WiFi".'],['Cek alamat IP laptop','IP: 169.254.12.7. Gateway: kosong.'],['Ping gateway 192.168.1.1','Gagal: Request timed out.'],['Cek lampu access point','Lampu LAN access point menyala normal.']],
+  o:['Perangkat tidak mendapat IP dari DHCP','Kabel access point putus','Server DNS salah alamat','Switch kehabisan port'],a:0,
+  x:'Alamat 169.254.x.x (APIPA) muncul ketika perangkat gagal mendapat alamat dari DHCP, jadi ia membuat alamat sendiri yang tidak berguna di luar perangkat. Sinyal dan access point baik; yang perlu dicek adalah layanan DHCP (mati atau jatah alamatnya habis).'}},
+{n:'Antarjaringan',pl:'Penghubung Gedung',ic:'🏢',bd:'Navigator Router',bdd:'Menyelesaikan semua tahap inti wilayah Antarjaringan.',
+ st:'Gedung Perpustakaan dan Gedung Rektorat sudah rapi sendiri-sendiri, tetapi belum dapat saling bicara. Alice: "Switch hanya mengurus satu jaringan. Untuk menyeberang, kita butuh router yang tahu jalan." Anda akan mempelajari router, tabel routing, default gateway, dan subnetting dasar.',
+ inc:{t:"Rektorat terisolasi"}},
+{n:'Keluar ke internet',pl:'Gerbang Internet',ic:'🌍',bd:'Pemandu Gerbang',bdd:'Menyelesaikan semua tahap inti wilayah Keluar ke internet.',
+ st:'Di ruang telekomunikasi, kabel dari penyedia internet (ISP) masuk ke modem. Ribuan mahasiswa berbagi satu pintu keluar. Alice: "Alamat di dalam kampus itu privat. Agar dapat berkunjung ke dunia luar, ada yang menerjemahkan alamat dan nama." Anda akan mempelajari ISP, modem, port, NAT, DNS, dan apa itu internet.',
+ inc:{t:"Alamat ada, nama hilang"}},
+{n:'Data bergerak',pl:'Pusat Data',ic:'🗄️',bd:'Pemburu Paket',bdd:'Menyelesaikan semua tahap inti wilayah Data bergerak.',
+ st:'Di pusat data kampus, server-server berjajar dan paket-paket data hilir mudik. Alice: "Data tidak dikirim utuh, tetapi dipecah menjadi paket, dan ada aturan yang menjaga semuanya sampai." Anda akan mempelajari aliran data, TCP dan UDP, model berlapis, kinerja jaringan (bandwidth, latency, throughput), serta cloud.',
+ inc:{t:"Video call putus-putus"}},
+{n:'Praktik dan penutup',pl:'Hari Peluncuran',ic:'🎓',bd:'Teknisi Lapangan',bdd:'Menyelesaikan semua tahap inti wilayah Praktik dan penutup.',
+ st:'Hari peluncuran tiba. Alice menyerahkan tablet berisi alat diagnosis: "Sekarang bukan lagi belajar. Kita lihat apakah Anda dapat membaca gejala." Anda akan memakai ping dan traceroute, mencoba perintah di perangkat Anda sendiri, lalu menelusuri satu klik penuh dari HP sampai server.',
+ inc:{t:"Pagi peluncuran: web tidak terbuka"}}];
+const RANKS=[[0,'Teknisi Magang','🔧'],[60,'Teknisi Junior','🛠️'],[150,'Teknisi Jaringan','📡'],[280,'Teknisi Senior','🧭'],[420,'Insinyur Jaringan','🚀'],[520,'Arsitek Jaringan','🏛️']];
+const RGI=ST.map(s=>PH.findIndex(p=>p[1].includes(s.id)));
+const regPos=k=>PH[k][1].map(id=>ST.findIndex(x=>x.id==id));
+const regCore=k=>regPos(k).filter(p=>ST[p].core);
+const coreDone=k=>regCore(k).every(p=>done[p]);
+const calc=()=>{let a=0,q=0,c=0;ST.forEach((s,i)=>{if(done[i])a+=s.core?10:15});Object.values(qa).forEach(x=>{if(x.ok)q+=5});
+ REG.forEach((r,k)=>{const g=gm.inc[k];if(g&&g.s)c+=15+(g.t==1?5:0)});return{a,q,c,xp:a+q+c}};
+const rankIdx=xp=>{let r=0;RANKS.forEach((x,i)=>{if(xp>=x[0])r=i});return r};
+const badgeSet=()=>{const s=REG.map((r,k)=>coreDone(k));s.push(ST.every((x,i)=>done[i]));return s};
+const BADGE_ALL=['Penjelajah Sejati','Menyelesaikan seluruh 29 tahap, termasuk pendalaman.'];
+let last=null,started=false;
+window.gLine=()=>{const c=calc(),r=RANKS[rankIdx(c.xp)];return r[2]+' '+r[1]+' · '+c.xp+' XP'};
+window.gSum=()=>{const c=calc(),r=RANKS[rankIdx(c.xp)],b=badgeSet(),nm=[];REG.forEach((x,k)=>{if(b[k])nm.push(x.bd)});if(b[6])nm.push(BADGE_ALL[0]);
+ return['Pangkat: '+r[1]+' ('+c.xp+' XP)','Lencana: '+(nm.join(', ')||'belum ada'),'Insiden terselesaikan: '+REG.filter((x,k)=>gm.inc[k]&&gm.inc[k].s).length+'/'+REG.length]};
+const tst=$('#tst');let tt=0;
+function toast(t){tst.textContent=t;tst.hidden=false;clearTimeout(tt);tt=setTimeout(()=>{tst.hidden=true},4500)}
+window.gUpd=()=>{const c=calc(),ri=rankIdx(c.xp),r=RANKS[ri],n=RANKS[ri+1],b=badgeSet();
+ $('#gr').textContent=r[2]+' '+r[1];$('#gx').textContent=c.xp+' XP'+(n?' · pangkat berikutnya '+n[1]+' di '+n[0]+' XP':' · pangkat tertinggi');
+ $('#gbar i').style.width=(n?(c.xp-r[0])/(n[0]-r[0])*100:100)+'%';
+ const k=RGI[I];$('#gw').textContent='📍 '+REG[k].ic+' '+REG[k].pl;
+ if(last){const m=[];if(c.xp>last.xp)m.push('+'+(c.xp-last.xp)+' XP');b.forEach((v,i)=>{if(v&&!last.b[i])m.push('🏅 Lencana baru: '+(i<6?REG[i].bd:BADGE_ALL[0]))});if(ri>last.r)m.push('🎉 Naik pangkat: '+r[1]+'!');if(m.length)toast(m.join(' · '))}
+ last={xp:c.xp,r:ri,b}};
+window.gReset=()=>{last=null};
+function story(k){gm.seen[k]=1;save();const R=REG[k];
+ openOv('📍 '+R.ic+' '+R.pl+' (wilayah '+(k+1)+' dari 6)',b=>{b.style.cssText='border-left:8px solid var(--gb'+(k+1)+');padding-left:12px';
+  b.append(E('p',esc(R.st)),E('p','<b>Tahap di wilayah ini:</b> '+regPos(k).map(p=>(p+1)+'. '+esc(nm(p))).join('; ')+'.'),E('p','⚡ Setelah semua tahap inti selesai, insiden <b>"'+esc(R.inc.t)+'"</b> menanti Anda.'));
+  const o=E('button','Mulai bertugas');o.onclick=closeOv;b.append(o)})}
+window.gAfterGo=()=>{if(!started)return;gUpd();devRow();const k=RGI[I];if(!gm.seen[k])story(k)};
+function incident(k){const R=REG[k];
+ if(!coreDone(k)){openOv('⚡ Insiden terkunci',b=>{const n=regCore(k).filter(p=>!done[p]).length;b.append(E('p','Insiden <b>"'+esc(R.inc.t)+'"</b> terbuka setelah semua tahap inti wilayah <b>'+esc(R.pl)+'</b> selesai. Masih ada <b>'+n+'</b> tahap inti yang belum selesai.'));
+  const o=E('button','Mengerti');o.onclick=closeOv;b.append(o)});return}
+ const g=gm.inc[k]||(gm.inc[k]={t:0,s:0}),used=new Set(),I2=R.inc&&R.inc.tools?R.inc:(window.__INC&&window.__INC[k]);
+ if(!I2){openOv('⚡ Insiden belum tersedia',b=>{b.append(E('p','Materi wilayah ini belum termuat. Muat ulang halaman setelah wilayahnya terbuka.'));const o=E('button','Mengerti');o.onclick=closeOv;b.append(o)});return}
+ 
+ openOv('⚡ '+I2.t,b=>{
+  b.append(E('p',esc(I2.s)),E('p','<b>1. Jalankan alat diagnosis</b> (boleh lebih dari satu):'));
+  const tw=E('div');tw.style.cssText='display:flex;flex-wrap:wrap;gap:8px';const outp=E('div');outp.setAttribute('aria-live','polite');outp.style.cssText='margin:8px 0;font:14px/1.4 ui-monospace,Consolas,monospace';
+  const showT=i=>{used.add(i);const d=E('p');d.style.cssText='background:var(--bg);padding:6px 10px;border-radius:8px;margin:4px 0';d.innerHTML='<b>'+esc(I2.tools[i][0])+':</b> '+esc(I2.tools[i][1]);outp.append(d)};
+  I2.tools.forEach((t,i)=>{const x=E('button',esc(t[0]));x.onclick=()=>{if(used.has(i))return;showT(i)};tw.append(x)});
+  const res=E('p');res.setAttribute('aria-live','polite');res.style.fontWeight='600';
+  b.append(tw,outp,E('p','<b>2. Tentukan diagnosis:</b>'));
+  const opts=I2.o.map((t,j)=>{const x=E('button',esc(t));x.className='o';x.onclick=()=>pick(j);b.append(x);return x});b.append(res);
+  function fin(){opts.forEach((x,j)=>{x.disabled=true;if(j==I2.a)x.classList.add('good')})}
+  function pick(j){if(g.s)return;g.t++;
+   if(j==I2.a){g.s=1;fin();const xp=15+(g.t==1?5:0);res.innerHTML='✅ Tepat! +'+xp+' XP'+(g.t==1?' (bonus percobaan pertama)':'')+'. '+esc(I2.x);save();upd()}
+   else{opts[j].disabled=true;opts[j].classList.add('bad');res.textContent=used.size?'❌ Belum tepat. Baca lagi hasil alat yang Anda jalankan, lalu coba diagnosis lain.':'❌ Belum tepat. Jalankan paling sedikit satu alat diagnosis dahulu, lalu pertimbangkan hasilnya.';save()}}
+  if(g.s){I2.tools.forEach((t,i)=>showT(i));fin();res.innerHTML='✅ Sudah selesai. '+esc(I2.x)}
+ })}
+$('#ib').onclick=()=>incident(RGI[I]);
+$('#sb').onclick=()=>story(RGI[I]);
+$('#bb').onclick=()=>openOv('🏆 Pangkat dan lencana',b=>{const c=calc(),ri=rankIdx(c.xp),r=RANKS[ri],n=RANKS[ri+1],bs=badgeSet();
+ b.append(E('p','<b style="font-size:20px">'+r[2]+' '+esc(r[1])+'</b> · <b>'+c.xp+' XP</b>'+(n?'<br>Pangkat berikutnya: '+n[2]+' '+esc(n[1])+' di '+n[0]+' XP (kurang '+(n[0]-c.xp)+' XP).':'<br>Pangkat tertinggi tercapai.')),
+  E('p','Sumber XP: tahap selesai <b>'+c.a+'</b> (inti 10, pendalaman 15) · pertanyaan benar pada percobaan pertama <b>'+c.q+'</b> (5 per soal) · insiden <b>'+c.c+'</b> (15, bonus 5 bila benar pada percobaan pertama). Jawaban yang salah tidak mengurangi XP, tetapi juga tidak menambah.'));
+ REG.forEach((R,k)=>{const d=E('div');d.style.cssText='background:var(--g'+(k+1)+');border:2px solid var(--gb'+(k+1)+');border-radius:10px;padding:8px 12px;margin:8px 0;color:var(--tx)';
+  const g=gm.inc[k],left=regCore(k).filter(p=>!done[p]).length;
+  d.innerHTML='<b>'+(bs[k]?'🏅 '+esc(R.bd):'🔒 '+esc(R.bd))+'</b> · '+R.ic+' '+esc(R.pl)+'<br>'+(bs[k]?'Diraih.':'Selesaikan '+left+' tahap inti lagi.')+' ⚡ Insiden: '+(g&&g.s?'selesai':(coreDone(k)?'siap dikerjakan':'terkunci'));d.setAttribute('role','group');b.append(d)});
+ const d=E('div');d.style.cssText='border:2px dashed var(--bd);border-radius:10px;padding:8px 12px;margin:8px 0';d.innerHTML='<b>'+(bs[6]?'🌟 ':'🔒 ')+BADGE_ALL[0]+'</b><br>'+BADGE_ALL[1];b.append(d)});
+// ---------- layar sambutan: dikelola cloud.js ----------
+const WL=$('#wl'),WB=$('#wlb');
+function setInert(v){['header','main'].forEach(s=>{const e=document.querySelector(s);if(e)e.inert=v})}
+window.gSetInert=setInert;
+window.gBegin=function(nama){WL.hidden=true;setInert(false);started=true;$('#gp').textContent='👤 '+(nama||'Peserta');gUpd();devRow();const k=RGI[I];if(!gm.seen[k])story(k);else{const f=$('#nav .cur')||$('#nx');f&&f.focus&&f.focus()}};
+window.gStory=story;window.gRGI=RGI;window.gRegions=REG;
+window.gReady=true;
+WL.addEventListener('keydown',e=>{if(WL.hidden||e.key!='Tab')return;const f=[...WL.querySelectorAll('button,input')].filter(x=>!x.disabled);if(!f.length)return;const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement==a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement==z){e.preventDefault();a.focus()}});
+
+const SK='stroke="var(--tx)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
+const DV={
+pc:['Komputer','Perangkat pengguna: memiliki input, proses, penyimpanan, dan output.',`<rect x="30" y="6" width="60" height="38" rx="4" fill="var(--bg)" ${SK}/><rect x="36" y="12" width="48" height="26" fill="var(--ac)" fill-opacity=".3"/><path d="M60 44v10M44 57h32" fill="none" ${SK}/>`],
+nic:['Kartu jaringan (NIC)','Perangkat keras di dalam komputer yang memiliki alamat MAC dan port untuk kabel LAN.',`<rect x="8" y="20" width="104" height="34" rx="3" fill="#2f9e55" fill-opacity=".35" ${SK}/><rect x="14" y="26" width="18" height="16" fill="var(--bg)" ${SK}/>`+[0,1,2,3,4,5,6].map(k=>`<rect x="${44+k*9}" y="54" width="5" height="9" fill="#d19a00"/>`).join('')],
+utp:['Kabel LAN (UTP)','Kabel berisi 8 kawat tembaga berpilin untuk jaringan Ethernet.',`<path d="M6 50C30 8 62 66 114 20" fill="none" stroke="var(--tx)" stroke-width="10" stroke-linecap="round"/><path d="M6 50C30 8 62 66 114 20" fill="none" stroke="var(--ac)" stroke-width="6" stroke-linecap="round"/>`],
+rj45:['Konektor RJ45','Ujung kabel LAN yang dipasang ke port. Urutan 8 kawat di dalamnya mengikuti standar T568B.',`<rect x="34" y="10" width="52" height="42" rx="4" fill="var(--bg)" ${SK}/>`+[0,1,2,3,4,5,6,7].map(k=>`<path d="M${40+k*5.7} 16v16" stroke="#d19a00" stroke-width="2.6"/>`).join('')+`<rect x="50" y="52" width="20" height="10" rx="2" fill="var(--bg)" ${SK}/>`],
+crimp:['Tang crimping','Menjepit konektor RJ45 pada ujung kabel agar kawat menempel pada kontak logam.',`<rect x="60" y="14" width="44" height="24" rx="5" fill="var(--bd)" ${SK}/><path d="M64 34L14 62M72 38L36 66" stroke="var(--or)" stroke-width="9" stroke-linecap="round"/><circle cx="68" cy="30" r="5" fill="var(--bg)" ${SK}/>`],
+tester:['LAN tester','Menyalakan lampu pin 1 sampai 8 satu per satu untuk memeriksa urutan dan sambungan kabel.',[8,66].map(x=>`<rect x="${x}" y="10" width="46" height="50" rx="6" fill="var(--bg)" ${SK}/>`+[0,1,2,3].map(k=>`<circle cx="${x+10+k*10}" cy="24" r="3.5" fill="#2f9e55"/><circle cx="${x+10+k*10}" cy="38" r="3.5" fill="#2f9e55"/>`).join('')+`<rect x="${x+14}" y="46" width="18" height="9" fill="var(--bd)"/>`).join('')+`<path d="M54 35h12" stroke="var(--tx)" stroke-width="2" stroke-dasharray="3 3"/>`],
+switch:['Switch','Menghubungkan banyak komputer dalam satu jaringan; meneruskan data hanya ke port tujuan berdasarkan alamat MAC.',`<rect x="6" y="22" width="108" height="30" rx="4" fill="var(--ac)" fill-opacity=".28" ${SK}/>`+[0,1,2,3,4,5,6,7].map(k=>`<rect x="${14+k*12}" y="36" width="8" height="9" fill="var(--bg)" stroke="var(--tx)" stroke-width="1.5"/><circle cx="${18+k*12}" cy="30" r="2" fill="#2f9e55"/>`).join('')],
+hub:['Hub','Perangkat lama yang menyalin setiap data ke semua port, sehingga kapasitas terbagi dan semua perangkat menerima data yang bukan untuknya.',`<rect x="14" y="22" width="92" height="30" rx="4" fill="var(--bd)" ${SK}/><text x="60" y="35" text-anchor="middle" font-size="9">HUB</text>`+[0,1,2,3,4].map(k=>`<rect x="${24+k*16}" y="39" width="9" height="9" fill="var(--bg)" stroke="var(--tx)" stroke-width="1.5"/>`).join('')],
+router:['Router','Meneruskan paket antarjaringan berdasarkan alamat IP dan tabel routing; menjadi gerbang ke jaringan lain.',`<path d="M28 34L20 6M92 34L100 6" fill="none" ${SK}/><rect x="8" y="34" width="104" height="26" rx="5" fill="var(--or)" fill-opacity=".3" ${SK}/>`+[0,1,2].map(k=>`<circle cx="${22+k*10}" cy="47" r="2.5" fill="#2f9e55"/>`).join('')+[0,1,2,3].map(k=>`<rect x="${64+k*11}" y="42" width="8" height="10" fill="var(--bg)" stroke="var(--tx)" stroke-width="1.5"/>`).join('')],
+modem:['Modem','Menerjemahkan sinyal digital dari router menjadi sinyal yang sesuai dengan jalur ISP, dan sebaliknya.',`<rect x="22" y="16" width="76" height="40" rx="6" fill="var(--bd)" ${SK}/>`+[0,1,2,3].map(k=>`<circle cx="${36+k*16}" cy="36" r="3.5" fill="#2f9e55"/>`).join('')+`<path d="M6 36h16M98 36h16" fill="none" ${SK}/>`],
+ap:['Access point','Memancarkan Wi-Fi dan menghubungkan perangkat nirkabel ke jaringan kabel.',`<path d="M20 52c0-12 18-20 40-20s40 8 40 20c0 6-18 11-40 11S20 58 20 52z" fill="var(--ac)" fill-opacity=".3" ${SK}/><path d="M46 24Q60 14 74 24M36 15Q60 -2 84 15" fill="none" ${SK}/>`],
+server:['Server','Komputer yang melayani permintaan banyak client, misalnya web, DNS, atau email. Di pusat data dipasang pada rak.',[8,28,48].map(y=>`<rect x="18" y="${y}" width="84" height="16" rx="3" fill="var(--bg)" ${SK}/><circle cx="28" cy="${y+8}" r="2.5" fill="#2f9e55"/><path d="M42 ${y+8}h40" stroke="var(--bd)" stroke-width="3"/>`).join('')],
+fiber:['Kabel serat optik','Mengirim data berupa cahaya melalui serat kaca; cepat dan berjangkauan jauh, dipakai antargedung dan oleh ISP.',`<path d="M6 44C30 8 60 66 98 30" fill="none" stroke="#e0752a" stroke-width="5" stroke-linecap="round"/><rect x="98" y="21" width="16" height="18" rx="3" fill="var(--bg)" ${SK}/><circle cx="112" cy="30" r="2" fill="#e0752a"/>`]};
+const DM={0:['pc','nic'],1:['utp','nic'],2:['utp','rj45','crimp','tester'],12:['ap'],13:['nic'],3:['switch','hub','utp'],11:['switch','hub','utp'],20:['switch'],25:['server'],4:['router','switch'],24:['router'],14:['router','switch'],6:['fiber','modem'],5:['modem','fiber'],28:['modem','router','ap','switch'],22:['server'],21:['router'],29:['server'],7:['router','fiber'],8:['server','router'],23:['server'],9:['router'],19:['server','fiber'],30:['pc'],31:['ap','modem','router','server']};
+function gal(fk){openOv('🧰 Galeri perangkat',b=>{const g=E('div');g.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px';
+ Object.keys(DV).forEach(k=>{const v=DV[k],c=E('div'),used=Object.keys(DM).filter(id=>DM[id].includes(k)).map(id=>ST.findIndex(x=>x.id==id)+1).filter(n=>n>0).sort((x,y)=>x-y);
+  c.id='dv-'+k;c.setAttribute('role','group');c.setAttribute('aria-label',v[0]);c.style.cssText='border:2px solid var(--bd);border-radius:10px;padding:8px;background:var(--bg)'+(k==fk?';outline:3px solid var(--or)':'');
+  c.innerHTML=`<svg viewBox="0 0 120 70" width="100%" height="84" role="img" aria-label="Gambar ${v[0]}">${v[2]}</svg><b>${v[0]}</b><br><span style="font-size:14px">${v[1]}</span><br><span style="font-size:13px;color:var(--mu)">Dipakai di tahap: ${used.join(', ')}</span>`;g.append(c)});
+ b.append(E('p','Gambar berikut hanya ilustrasi sederhana untuk mengenali bentuk perangkat.'),g);const f=fk&&b.querySelector('#dv-'+fk);if(f&&f.scrollIntoView)f.scrollIntoView({block:'center'})})}
+function devRow(){const d=$('#dvr');d.innerHTML='';const ks=DM[ST[I].id];if(!ks)return;d.append(E('span','🧰 Perangkat di tahap ini:'));ks.forEach(k=>{const x=E('button',DV[k][0]);x.onclick=()=>gal(k);d.append(x)})}
+$('#dv').onclick=()=>gal();
+$('#cu').onclick=()=>{window.cloudKeluar&&window.cloudKeluar()};
+})();
+</script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous"></script>
+<script src="cloud.js"></script></body></html>
