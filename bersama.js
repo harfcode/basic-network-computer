@@ -107,7 +107,8 @@
       gaya();
       var info = opsi.info, pil = {}, wadah = C.el('div'), selects = {}, ringkas = C.el('div', { 'class': 'pk-r', role: 'status', 'aria-live': 'polite' }), grupHitung = {};
       (info.pra.soal_ids || []).forEach(function (id) { pil[id] = 'pra'; }); (info.pasca.soal_ids || []).forEach(function (id) { pil[id] = 'pasca'; });
-      var acak = C.el('input', { type: 'checkbox', id: 'pk-acak' }), praAktif = C.el('input', { type: 'checkbox', id: 'pk-pra' }), jadwal = C.el('input', { type: 'datetime-local', 'aria-label': 'Pasca-tes dibuka mulai (opsional)' });
+      var acak = C.el('input', { type: 'checkbox', id: 'pk-acak' }), praAktif = C.el('input', { type: 'checkbox', id: 'pk-pra' }), jadwal = C.el('input', { type: 'datetime-local', 'aria-label': 'Pasca-tes dibuka mulai (opsional)' }), tutup = C.el('input', { type: 'datetime-local', 'aria-label': 'Pasca-tes ditutup pada (opsional)' });
+      tutup.value = lokalIso(info.pasca.ditutup_pada);
       acak.checked = info.pra.acak !== false; praAktif.checked = info.pra.aktif !== false; jadwal.value = lokalIso(info.pasca.dibuka_pada);
       var pesan = C.el('p', { role: 'status', 'aria-live': 'polite', style: 'font-weight:700' });
       function hitung() {
@@ -135,8 +136,10 @@
         if (pra.length < 10 || pasca.length < 10) { pesan.textContent = 'Pilih minimal 10 soal untuk pra-tes dan 10 untuk pasca-tes.'; return; }
         simpan.disabled = true;
         try {
-          var jd = jadwal.value ? new Date(jadwal.value).toISOString() : null;
-          var r = await opsi.simpan(pra, pasca, acak.checked, praAktif.checked, opsi.jadwal ? jd : null);
+          var jd = jadwal.value ? new Date(jadwal.value).toISOString() : null, td = tutup.value ? new Date(tutup.value).toISOString() : null;
+          if (opsi.jadwal && jd && td && new Date(td) <= new Date(jd)) { pesan.textContent = 'Waktu penutupan harus setelah waktu pembukaan.'; simpan.disabled = false; return; }
+          if (opsi.jadwal && td && new Date(td) <= new Date() && tutup.value !== lokalIso(info.pasca.ditutup_pada)) { pesan.textContent = 'Waktu penutupan harus di masa depan.'; simpan.disabled = false; return; }
+          var r = await opsi.simpan(pra, pasca, acak.checked, praAktif.checked, opsi.jadwal ? jd : null, opsi.jadwal ? td : null);
           pesan.textContent = r.ok ? 'Paket tes tersimpan.' + (r.info && r.info.seimbang === false ? ' Catatan: jumlah soal per tujuan belum seimbang.' : '') : r.pesan;
         } catch (e) { pesan.textContent = C.errTxt(e); }
         simpan.disabled = false;
@@ -145,7 +148,9 @@
       var kontrol = C.el('div', null,
         C.el('p', null, C.el('label', null, acak, ' Acak urutan soal dan pilihan jawaban untuk tiap siswa (disarankan)')),
         C.el('p', null, C.el('label', null, praAktif, ' Pra-tes diaktifkan untuk kelas ini')),
-        opsi.jadwal ? C.el('p', null, C.el('label', null, 'Pasca-tes dibuka mulai (kosong = kapan saja setelah tahap inti selesai) '), jadwal) : null);
+        opsi.jadwal ? C.el('p', null, C.el('label', null, 'Pasca-tes dibuka mulai (kosong = kapan saja setelah tahap inti selesai) '), jadwal) : null,
+        opsi.jadwal ? C.el('p', null, C.el('label', null, 'Pasca-tes ditutup pada (kosong = tidak ada batas; setelah waktu ini semua pengerjaan yang sedang berjalan ikut selesai) '), tutup) : null,
+        opsi.jadwal ? C.el('p', { style: 'color:var(--mu)' }, info.menit ? 'Durasi pengerjaan: ' + info.menit + ' menit (diatur admin, sama untuk semua kelas).' : 'Durasi pengerjaan: tanpa batas waktu (admin belum mengatur timer).') : null);
       hitung();
       return C.el('div', null,
         C.el('p', { style: 'color:var(--mu)' }, 'Pilih soal dari bank untuk tiap tes: minimal 10 soal untuk pra-tes dan 10 untuk pasca-tes. Satu soal hanya dapat dipakai di salah satu tes. Untuk membandingkan nilai dengan adil, usahakan jumlah soal per tujuan belajar sama di kedua tes. Pasca-tes selalu aktif karena menjadi syarat sertifikat.'),

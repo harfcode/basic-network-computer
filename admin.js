@@ -155,17 +155,21 @@
     bagian(b, 'Kelas');
     var daftar = C.el('div'), nm = C.inp('Nama kelas baru', { 'aria-label': 'Nama kelas' }), prog = C.el('div');
     async function muat() {
-      var r = await C.sb.from('kelas').select('id,nama,kode,pemilik_id,dibuka,diskon_pascates').order('dibuat', { ascending: false }); if (r.error) throw r.error; daftar.innerHTML = '';
+      var r = await C.sb.from('kelas').select('id,nama,kode,pemilik_id,dibuka,diskon_pascates,diarsipkan').order('dibuat', { ascending: false }); if (r.error) throw r.error; daftar.innerHTML = '';
       var gr = (await rpc('admin_daftar_guru', {})).filter(function (x) { return x.peran === 'guru'; });
       r.data.forEach(function (k) {
         var pm = C.el('select', { 'aria-label': 'Pemilik kelas ' + k.nama }, C.el('option', { value: '' }, '(tanpa guru)'));
         gr.forEach(function (g) { pm.append(C.el('option', { value: g.id }, g.nama || g.email)); }); pm.value = k.pemilik_id || '';
         var df = C.inp('Diskon pasca-tes (%)', { type: 'number', min: '0', max: '100', 'aria-label': 'Diskon pasca-tes kelas ' + k.nama }); df.value = k.diskon_pascates; df.style.width = '90px';
         daftar.append(C.el('div', { style: 'border-top:1px solid var(--bd);padding:6px 0' },
-          C.el('b', null, k.nama), ' · kode kelas: ', C.el('code', null, k.kode), k.dibuka ? '' : ' · (tertutup)', C.el('br'),
+          C.el('b', null, k.nama), ' · kode kelas: ', C.el('code', null, k.kode), k.diarsipkan ? ' · (diarsipkan)' : (k.dibuka ? '' : ' · (tertutup)'), C.el('br'),
           C.el('label', null, 'Guru: '), pm, C.btn('Serahkan', aman(async function () { var x = await rpc('admin_serahkan_kelas', { p_kelas: k.id, p_guru: pm.value || null }); C.toast(x.ok ? 'Tersimpan.' : x.pesan); await muat(); })), C.el('br'),
           C.el('label', null, 'Diskon pasca-tes: '), df, ' %', C.btn('Simpan diskon', aman(async function () { var x = await rpc('admin_set_diskon_kelas', { p_kelas: k.id, p_persen: parseInt(df.value, 10) }); C.toast(x.ok ? 'Tersimpan.' : x.pesan); })), C.el('br'),
-          C.btn('Lihat kemajuan', aman(async function () {
+          C.btn('Hapus paksa', aman(async function () {
+            var n = window.prompt('HAPUS PAKSA kelas ini beserta keanggotaannya? Siswa tidak ikut terhapus, tetapi riwayat tes kelas ini ikut hilang dan voucher kelas yang belum ditukar dibatalkan (voucher guru dikembalikan ke gurunya). Tindakan tidak dapat dibatalkan.\n\nKetik nama kelas persis untuk melanjutkan:\n' + k.nama);
+            if (n == null) return;
+            var x = await rpc('admin_hapus_kelas', { p_kelas: k.id, p_nama: n }); C.toast(x.ok ? 'Kelas dihapus (' + x.siswa + ' siswa dikeluarkan).' : x.pesan); if (x.ok) await muat();
+          })), ' ', C.btn('Lihat kemajuan', aman(async function () {
             var d = await rpc('admin_progres_kelas', { p_kelas: k.id }); prog.innerHTML = '';
             var br = d.map(function (x) { return [x.nama, x.email, x.tahap_selesai, x.skor_benar + '/' + x.skor_total, x.wilayah_dibuka, x.diubah ? new Date(x.diubah).toLocaleString('id-ID') : '']; });
             prog.append(C.el('h4', null, 'Kemajuan: ' + k.nama), tabel(['Nama', 'Email', 'Tahap selesai', 'Skor', 'Wilayah dibuka', 'Terakhir'], br), C.btn('Unduh CSV', function () { unduh('kelas-' + k.nama + '.csv', ['nama', 'email', 'tahap_selesai', 'skor', 'wilayah_dibuka', 'terakhir'], br); }));
@@ -188,7 +192,7 @@
     baris('nilai_poin_rp', 'Nilai satu poin (Rupiah)', 'num'); baris('bundel_diskon_persen', 'Diskon paket semua wilayah (%)', 'num');
     baris('transfer_aktif', 'Pemindahan poin antarpeserta', 'bool'); baris('transfer_min', 'Pemindahan: minimal poin', 'num'); baris('transfer_maks_harian', 'Pemindahan: maksimal poin per hari', 'num'); baris('transfer_tahan_jam', 'Pemindahan: masa tahan poin baru (jam)', 'num');
     baris('versi_ketentuan', 'Versi ketentuan (ubah = semua peserta diminta menyetujui ulang)', 'str');
-    baris('sertifikat_min_skor', 'Nilai minimal pasca-tes untuk lulus dan berhak sertifikat (%)', 'num'); baris('harga_pascates', 'Harga pasca-tes (poin per percobaan, sebelum diskon kelas)', 'num'); baris('pascates_maks_percobaan', 'Batas percobaan pasca-tes per peserta', 'num'); baris('sertifikat_penerbit', 'Sertifikat: nama penerbit (tercetak pada sertifikat baru)', 'str'); baris('sertifikat_penandatangan', 'Sertifikat: nama penandatangan (boleh kosong)', 'str');
+    baris('sertifikat_min_skor', 'Nilai minimal pasca-tes untuk lulus dan berhak sertifikat (%)', 'num'); baris('harga_pascates', 'Harga pasca-tes (poin per percobaan, sebelum diskon kelas)', 'num'); baris('pascates_maks_percobaan', 'Batas percobaan pasca-tes per peserta', 'num'); baris('pascates_menit', 'Timer pasca-tes: durasi pengerjaan dalam menit, sama untuk semua kelas (0 = tanpa timer, maksimal 240)', 'num'); baris('sertifikat_penerbit', 'Sertifikat: nama penerbit (tercetak pada sertifikat baru)', 'str'); baris('sertifikat_penandatangan', 'Sertifikat: nama penandatangan (boleh kosong)', 'str');
     b.append(C.el('h4', null, 'Harga wilayah (poin) dan versi berkas'));
     Object.keys(W).map(Number).sort().forEach(function (id) {
       var w = W[id]; if (w.gratis) { b.append(C.el('p', null, 'Wilayah ' + id + ' ' + w.nama + ': gratis')); return; }

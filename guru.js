@@ -20,9 +20,23 @@
       async function tampil() {
         var k = await rpc('guru_kelas_saya', {}); wadah.innerHTML = '';
         if (!k.length) { wadah.append(C.el('p', null, 'Belum ada kelas. Buat kelas pertama Anda di atas.')); return; }
-        wadah.append(B.tabel(['Kelas', 'Kode', 'Siswa', 'Pendaftaran', ''], k.map(function (x) {
-          return [x.nama, x.kode, x.siswa, x.dibuka ? 'dibuka' : 'ditutup', C.btn('Buka', function () { detail(b, x); })];
-        })));
+        var aksi = function (x) {
+          var a = [C.btn('Buka', function () { detail(b, x); }),
+            C.btn(x.diarsipkan ? 'Pulihkan' : 'Arsipkan', aman(async function () {
+              if (!x.diarsipkan && !window.confirm('Arsipkan kelas "' + x.nama + '"? Pendaftaran ditutup dan kelas disembunyikan dari daftar aktif. Data siswa dan hasil tes tetap tersimpan.')) return;
+              var r = await rpc('guru_arsipkan_kelas', { p_kelas: x.id, p_arsip: !x.diarsipkan }); C.toast(r.ok ? (x.diarsipkan ? 'Kelas dipulihkan.' : 'Kelas diarsipkan.') : r.pesan); await tampil();
+            }))];
+          if (x.bisa_hapus) a.push(C.btn('Hapus', aman(async function () {
+            if (!window.confirm('Hapus kelas kosong "' + x.nama + '"? Voucher kelas yang belum ditukar dibatalkan dan poinnya dikembalikan. Tindakan ini tidak dapat dibatalkan.')) return;
+            var r = await rpc('guru_hapus_kelas', { p_kelas: x.id }); C.toast(r.ok ? 'Kelas dihapus.' : r.pesan); await tampil();
+          })));
+          return a;
+        };
+        var aktif = k.filter(function (x) { return !x.diarsipkan; }), arsip = k.filter(function (x) { return x.diarsipkan; });
+        var baris = function (x) { return [x.nama, x.kode, x.siswa, x.diarsipkan ? 'diarsipkan' : (x.dibuka ? 'dibuka' : 'ditutup'), (function () { var sp = C.el('span', { style: 'display:flex;flex-wrap:wrap;gap:6px' }); aksi(x).forEach(function (a) { sp.append(a); }); return sp; })()]; };
+        if (aktif.length) wadah.append(B.tabel(['Kelas', 'Kode', 'Siswa', 'Pendaftaran', ''], aktif.map(baris)));
+        else wadah.append(C.el('p', null, 'Tidak ada kelas aktif.'));
+        if (arsip.length) wadah.append(C.el('h4', null, 'Kelas diarsipkan'), B.tabel(['Kelas', 'Kode', 'Siswa', 'Status', ''], arsip.map(baris)));
       }
       tampil().catch(function (e) { wadah.append(C.el('p', { role: 'alert' }, C.errTxt(e))); });
     }
@@ -31,7 +45,7 @@
       b.innerHTML = '';
       b.append(C.btn('← Daftar kelas', function () { daftarKelas(b); }), C.el('h3', null, kelas.nama), C.el('p', null, 'Kode kelas: ', C.el('b', null, kelas.kode)));
       var tab = C.el('div', { role: 'group', 'aria-label': 'Bagian kelas', style: 'display:flex;flex-wrap:wrap;gap:6px;margin:8px 0' }), isi = C.el('div');
-      var bagian = [['Siswa', siswa], ['Analitik', analitik], ['Paket tes', paket], ['Laporan tes', laporan], ['Diskon', diskon], ['Pengaturan', atur]];
+      var bagian = [['Siswa', siswa], ['Analitik', analitik], ['Paket tes', paket], ['Laporan tes', laporan], ['Diskon', diskon], ['Voucher', voucher], ['Pengaturan', atur]];
       bagian.forEach(function (x) {
         var t = C.btn(x[0], function () { Array.from(tab.children).forEach(function (c) { c.setAttribute('aria-pressed', c === t ? 'true' : 'false'); }); isi.innerHTML = ''; x[1](isi, kelas).catch(function (e) { isi.append(C.el('p', { role: 'alert' }, C.errTxt(e))); }); });
         t.setAttribute('aria-pressed', 'false'); tab.append(t);
@@ -59,7 +73,7 @@
     async function paket(b, kelas) {
       var bank = await rpc('guru_bank_soal', {}), info = await rpc('guru_tes_kelas', { p_kelas: kelas.id });
       b.append(C.el('p', { style: 'color:var(--mu)' }, info.pra.ada || info.pasca.ada ? 'Kelas ini memakai paket tes sendiri.' : 'Kelas ini masih memakai paket bawaan. Simpan paket di bawah untuk membuat paket khusus kelas.'),
-        B.editorPaket({ bank: bank, info: info, jadwal: true, simpan: function (pra, pasca, acak, praAktif, dibuka) { return rpc('guru_simpan_tes', { p_kelas: kelas.id, p_pra: pra, p_pasca: pasca, p_acak: acak, p_pra_aktif: praAktif, p_dibuka_pada: dibuka }); } }));
+        B.editorPaket({ bank: bank, info: info, jadwal: true, simpan: function (pra, pasca, acak, praAktif, dibuka, ditutup) { return rpc('guru_simpan_tes', { p_kelas: kelas.id, p_pra: pra, p_pasca: pasca, p_acak: acak, p_pra_aktif: praAktif, p_dibuka_pada: dibuka, p_ditutup_pada: ditutup }); } }));
     }
 
     async function laporan(b, kelas) {
@@ -99,6 +113,42 @@
         finally { k.disabled = false; }
       }), 'o');
       b.append(p, a, k);
+    }
+
+    async function voucher(b, kelas) {
+      var sd = await rpc('guru_saldo_voucher', {});
+      var info = C.el('p', { role: 'status', 'aria-live': 'polite' });
+      var tampilSaldo = function (x) { info.textContent = 'Poin Anda ' + x.saldo + '. Dapat dipakai untuk voucher sekarang: ' + x.tersedia + (x.tertahan ? ' (' + x.tertahan + ' poin yang baru diterima ditahan ' + x.tahan_jam + ' jam).' : '.'); };
+      tampilSaldo(sd);
+      b.append(C.el('p', { style: 'color:var(--mu)' }, 'Voucher dibayar dari poin Anda sendiri dan hanya dapat ditukar oleh siswa kelas ini. Poin langsung dikurangi saat kode dibuat; bila kode dibatalkan sebelum dipakai, poin kembali.'), info);
+      if (kelas.diarsipkan) { b.append(C.el('p', null, 'Kelas diarsipkan. Pulihkan kelas untuk membuat voucher.')); }
+      var jml = C.inp('Jumlah kode (1–100)', { type: 'number', min: '1', max: '100', 'aria-label': 'Jumlah kode' }), poin = C.inp('Poin per kode (1–1000)', { type: 'number', min: '1', max: '1000', 'aria-label': 'Poin per kode' }), cat = C.inp('Catatan (opsional)', { maxlength: '80', 'aria-label': 'Catatan' });
+      var hasil = C.el('div'), daftar = C.el('div');
+      var buat = C.btn('Buat voucher', aman(async function () {
+        buat.disabled = true;
+        try {
+          var r = await rpc('guru_buat_voucher', { p_kelas: kelas.id, p_jumlah: parseInt(jml.value, 10), p_poin: parseInt(poin.value, 10), p_catatan: cat.value });
+          if (!r.ok) { C.toast(r.pesan); return; }
+          C.toast(r.kode.length + ' kode dibuat (' + r.total + ' poin).');
+          hasil.innerHTML = ''; hasil.append(C.el('p', { role: 'status' }, 'Kode baru: ' + r.kode.join(', ')), C.btn('Unduh CSV kode baru', function () { B.unduh('voucher-' + kelas.kode + '.csv', ['kode', 'poin'], r.kode.map(function (c) { return [c, parseInt(poin.value, 10)]; })); }));
+          var s2 = await rpc('guru_saldo_voucher', {}); tampilSaldo(s2); await muat();
+        } finally { buat.disabled = false; }
+      }), 'o');
+      if (!kelas.diarsipkan) b.append(C.el('p', null, C.el('label', null, 'Jumlah kode ', jml)), C.el('p', null, C.el('label', null, 'Poin per kode ', poin)), C.el('p', null, C.el('label', null, 'Catatan ', cat)), buat);
+      b.append(hasil, C.el('h4', null, 'Voucher kelas ini'), daftar);
+      async function muat() {
+        var d = await rpc('guru_daftar_voucher', { p_kelas: kelas.id }); daftar.innerHTML = '';
+        if (!d.length) { daftar.append(C.el('p', null, 'Belum ada voucher.')); return; }
+        var st = { belum: 'belum dipakai', dipakai: 'dipakai', batal: 'dibatalkan' };
+        daftar.append(B.tabel(['Kode', 'Poin', 'Catatan', 'Status', 'Dipakai oleh', ''], d.map(function (v) {
+          return [v.kode, v.poin, v.catatan || '-', st[v.status] || v.status, v.penukar || '-', v.status === 'belum' ? C.btn('Batalkan', aman(async function () {
+            if (!window.confirm('Batalkan voucher ' + v.kode + '? ' + v.poin + ' poin dikembalikan ke Anda.')) return;
+            var r = await rpc('guru_batalkan_voucher', { p_kode: v.kode }); C.toast(r.ok ? 'Voucher dibatalkan.' : r.pesan);
+            tampilSaldo(await rpc('guru_saldo_voucher', {})); await muat();
+          })) : ''];
+        })), C.el('p'), C.btn('Unduh CSV daftar voucher', function () { B.unduh('daftar-voucher-' + kelas.kode + '.csv', ['kode', 'poin', 'catatan', 'status', 'dipakai_oleh'], d.map(function (v) { return [v.kode, v.poin, v.catatan || '', v.status, v.penukar || '']; })); }));
+      }
+      await muat();
     }
 
     async function atur(b, kelas) {

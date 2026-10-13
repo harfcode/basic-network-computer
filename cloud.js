@@ -12,6 +12,8 @@
     'Jika Anda menghapus akun, kemajuan dan sisa poin hilang dan tidak dapat dipulihkan. Catatan transaksi tetap disimpan tanpa identitas Anda.',
     'Pengelola dapat melihat kemajuan belajar peserta. Jika Anda bergabung ke kelas, guru pemilik kelas dapat melihat nama, email, kemajuan, serta hasil pra-tes dan pasca-tes Anda, dan ringkasan statistik kelas.',
     'Pra-tes gratis dan dapat dikerjakan satu kali. Pasca-tes memakai poin pada setiap percobaan (jumlah percobaan dibatasi) dan hasil terbaiknya menjadi syarat sertifikat. Poin pasca-tes tidak dikembalikan, termasuk bila Anda tidak lulus.',
+    'Pasca-tes dapat memiliki batas waktu pengerjaan (timer) yang ditetapkan pengelola, dan waktu penutupan yang ditetapkan guru kelas. Timer tetap berjalan bila Anda keluar dari halaman; saat waktu habis atau tes ditutup, jawaban yang sudah tersimpan dinilai otomatis dan percobaan tetap dihitung.',
+    'Guru dapat membuat voucher untuk siswa kelasnya dari poin guru itu sendiri. Voucher hanya dapat ditukar oleh siswa kelas tersebut dan berlaku seperti poin lainnya (tanpa kedaluwarsa, tanpa pengembalian dana).',
     'Pilihan guru bersifat permintaan: akun menjadi guru hanya setelah disetujui pengelola.',
     'Bila Anda menerbitkan sertifikat, nama pada sertifikat dapat diperiksa siapa saja yang memegang kodenya (hanya nama, tanggal, dan penerbit). Sertifikat dihapus bersama akun dan dapat dicabut pengelola bila terbukti ada kecurangan.'
   ];
@@ -250,7 +252,7 @@
   }
 
   /* ---------- dialog poin ---------- */
-  var JENIS = { manual: 'Pemberian pengelola', bonus: 'Bonus', voucher: 'Tukar voucher', beli_wilayah: 'Buka wilayah', beli_bundel: 'Buka semua wilayah', transfer_keluar: 'Kirim poin', transfer_masuk: 'Terima poin', koreksi: 'Koreksi', pasca_tes: 'Pasca-tes' };
+  var JENIS = { manual: 'Pemberian pengelola', bonus: 'Bonus', voucher: 'Tukar voucher', beli_wilayah: 'Buka wilayah', beli_bundel: 'Buka semua wilayah', transfer_keluar: 'Kirim poin', transfer_masuk: 'Terima poin', koreksi: 'Koreksi', pasca_tes: 'Pasca-tes', voucher_guru_keluar: 'Buat voucher kelas', voucher_guru_batal: 'Voucher dikembalikan', voucher_guru_masuk: 'Tukar voucher dari guru' };
   async function dialogPoin(pesan) {
     var rb = await sb.from('buku_poin').select('delta,jenis,alasan,dibuat').order('dibuat', { ascending: false }).limit(15);
     await muatSaldo();
@@ -334,13 +336,17 @@
         info.append(el('li', null, pc.jumlah_soal + ' soal, nilai lulus minimal ' + pc.minimal + '%.'),
           el('li', null, 'Biaya ' + fmt(pc.harga) + ' poin per percobaan' + (pc.diskon ? ' (sudah termasuk diskon kelas ' + pc.diskon + '%)' : '') + ', maksimal ' + pc.maks + ' percobaan. Saldo Anda ' + fmt(pc.saldo) + ' poin.'),
           el('li', null, 'Percobaan ke-' + Math.min(pc.percobaan + (pc.berjalan ? 0 : 1), pc.maks) + ' dari ' + pc.maks + '. Pasca-tes menjadi syarat sertifikat.'));
+        var wk = function (x) { return new Date(x).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); };
+        if (pc.menit) info.append(el('li', null, 'Batas waktu pengerjaan ' + pc.menit + ' menit. Timer mulai berjalan saat Anda menekan mulai dan tidak berhenti walau halaman ditutup.'));
+        if (pc.dibuka_pada && new Date(pc.dibuka_pada) > new Date()) info.append(el('li', null, 'Dibuka mulai ' + wk(pc.dibuka_pada) + '.'));
+        if (pc.ditutup_pada) info.append(el('li', null, 'Ditutup ' + wk(pc.ditutup_pada) + '. Setelah itu pengerjaan yang masih berjalan ikut selesai.'));
         b.append(info);
         if (pc.nilai_terbaik != null) b.append(el('p', null, 'Nilai terbaik Anda: ' + pc.nilai_terbaik + '%' + (pc.lulus ? ' ✅ lulus' : '')));
-        if (pc.berjalan) b.append(btn('Lanjutkan pasca-tes (tanpa biaya tambahan)', function () { mulaiTes('pasca'); }, 'o'));
+        if (pc.berjalan) b.append(btn('Lanjutkan pasca-tes (tanpa biaya tambahan' + (pc.sisa_detik != null ? ', sisa ' + Math.ceil(pc.sisa_detik / 60) + ' menit' : '') + ')', function () { mulaiTes('pasca'); }, 'o'));
         else if (pc.lulus) b.append(btn('Lihat sertifikat', function () { dialogSertifikat(); }, 'o'));
         else if (!pc.tersedia) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pc.alasan));
         else {
-          var yakin = 0, lbl = 'Mulai pasca-tes (' + fmt(pc.harga) + ' poin)', mb = btn(lbl, function () {
+          var yakin = 0, lbl = 'Mulai pasca-tes (' + fmt(pc.harga) + ' poin' + (pc.menit ? ', ' + pc.menit + ' menit' : '') + ')', mb = btn(lbl, function () {
             if (!yakin) { yakin = 1; mb.textContent = 'Yakin? Klik lagi untuk membayar ' + fmt(pc.harga) + ' poin dan memulai'; setTimeout(function () { yakin = 0; mb.textContent = lbl; }, 4000); return; }
             mb.disabled = true; mulaiTes('pasca', mb);
           }, 'o');
@@ -365,10 +371,21 @@
       function simpan(sid, v) {
         jw[sid] = v;
         antri = antri.then(function () { return sb.rpc('simpan_jawaban_tes', { p_percobaan: d.percobaan, p_soal: sid, p_pilihan: v }); })
-          .then(function (r) { if (r.error || !(r.data && r.data.ok)) toast('Jawaban belum tersimpan: ' + (r.error ? errTxt(r.error) : r.data.pesan)); }, function (e) { toast('Jawaban belum tersimpan: ' + errTxt(e)); });
+          .then(function (r) { if (r.data && r.data.habis) { kumpul(true); return; } if (r.error || !(r.data && r.data.ok)) toast('Jawaban belum tersimpan: ' + (r.error ? errTxt(r.error) : r.data.pesan)); }, function (e) { toast('Jawaban belum tersimpan: ' + errTxt(e)); });
+      }
+      var akhir = d.sisa_detik == null ? null : Date.now() + d.sisa_detik * 1000, tick = null, sudah = {};
+      var bar = el('p', { style: 'font-weight:700;font-size:18px;margin:0 0 8px' }), umum = el('p', { role: 'status', 'aria-live': 'polite', style: 'position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden' });
+      bar.setAttribute('aria-hidden', 'true');
+      function sisa() { return Math.max(0, Math.ceil((akhir - Date.now()) / 1000)); }
+      function gambarWaktu() {
+        var t = sisa(), m = Math.floor(t / 60), dt = t % 60;
+        bar.textContent = '⏱ Sisa waktu ' + String(m).padStart(2, '0') + ':' + String(dt).padStart(2, '0'); bar.style.color = t <= 60 ? 'var(--er,#c00)' : '';
+        [[600, '10 menit'], [300, '5 menit'], [60, '1 menit'], [30, '30 detik']].forEach(function (a) { if (t <= a[0] && !sudah[a[0]] && t > 0) { sudah[a[0]] = 1; umum.textContent = 'Sisa waktu ' + a[1] + '.'; } });
+        if (t <= 0) { clearInterval(tick); tick = null; umum.textContent = 'Waktu habis. Jawaban Anda dikumpulkan.'; kumpul(true); }
       }
       function tampil() {
         b.innerHTML = '';
+        if (akhir != null) { b.append(bar, umum); gambarWaktu(); }
         var s = soal[i], fs = el('fieldset', { style: 'border:1px solid var(--bd);border-radius:10px;padding:8px 12px' }, el('legend', { style: 'font-weight:700' }, 'Soal ' + (i + 1) + ' dari ' + soal.length));
         fs.append(el('p', null, s.teks));
         s.pilihan.concat(['Belum tahu']).forEach(function (o, k) {
@@ -395,19 +412,22 @@
         });
       }
       var sedangKirim = false;
-      async function selesai() {
+      function selesai() { return kumpul(false); }
+      async function kumpul(paksa) {
         var kosong = soal.filter(function (s) { return jw[s.id] === undefined; }).length;
-        if (kosong && !window.confirm(kosong + ' soal belum dijawab dan akan dihitung salah. Tetap kumpulkan?')) return;
+        if (!paksa && kosong && !window.confirm(kosong + ' soal belum dijawab dan akan dihitung salah. Tetap kumpulkan?')) return;
         if (sedangKirim) return; sedangKirim = true;
         try {
           await antri;
           var r = await sb.rpc('selesai_tes', { p_percobaan: d.percobaan }); if (r.error) throw r.error;
           if (!r.data.ok) { toast(r.data.pesan); sedangKirim = false; return; }
-          hasil(r.data);
+          if (tick) { clearInterval(tick); tick = null; }
+          hasil(r.data, paksa || r.data.waktu_habis);
         } catch (e) { sedangKirim = false; toast('Gagal mengumpulkan: ' + errTxt(e)); }
       }
-      function hasil(h) {
+      function hasil(h, habis) {
         b.innerHTML = '';
+        if (habis) b.append(el('p', { role: 'status', style: 'font-weight:700' }, '⏱ Waktu pengerjaan habis atau tes ditutup. Jawaban yang sudah tersimpan dinilai otomatis.'));
         var pt = $('#ts'); if (pt) pt.textContent = '📝 Tes';
         b.append(el('h3', { role: 'status' }, judul + ' selesai: ' + h.nilai + '% (' + h.benar + ' dari ' + h.total + ' benar)'));
         var lemah = (h.per_tujuan || []).filter(function (t) { return t.benar < t.total; });
@@ -430,6 +450,7 @@
       }
       b.append(el('p', { style: 'color:var(--mu)' }, 'Pilih satu jawaban per soal. Anda dapat kembali ke soal sebelumnya sebelum mengumpulkan.'));
       tampil();
+      if (akhir != null) tick = setInterval(function () { if (!document.body.contains(b)) { clearInterval(tick); tick = null; return; } gambarWaktu(); }, 1000);
     });
   }
 
