@@ -548,6 +548,7 @@
       b.append(el('p', null, '🎉 Anda memenuhi syarat. Periksa penulisan nama Anda, karena nama tidak dapat diubah setelah sertifikat diterbitkan.'), nm, el('p'), tb);
     });
   }
+  window.gSelesai = function () { dialogSertifikat(); };
   function siapkanSertifikat() {
     var pt = $('#pt'); if (!pt || $('#sr')) return;
     var b = el('button', { type: 'button', id: 'sr' }, '🎓 Sertifikat'); b.onclick = function () { dialogSertifikat(); }; pt.after(b);
