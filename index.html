@@ -28,7 +28,8 @@ code{word-break:break-all;background:var(--bg);padding:2px 6px;border-radius:6px
 #qz{margin-top:12px;border-top:1px solid var(--bd);padding-top:10px}#qz p{margin:4px 0}
 #qz .o,#out .o{display:block;width:100%;text-align:left;margin:6px 0;cursor:pointer}#qz .o.good,#out .o.good{border-color:var(--ok);font-weight:700}#qz .o.bad,#out .o.bad{border-color:var(--or);text-decoration:line-through}
 .box{overflow-x:auto}
-@media(max-width:640px){#stage{min-width:600px}svg text[font-size="11"],svg text[font-size="13"],svg text[font-size="14"],svg text[font-size="15"]{font-size:17px}}
+.rot{display:none;margin:6px 0 0;font-size:13px;color:var(--mu)}
+@media(max-width:640px){.box{overflow-x:visible}.rot{display:block}#stage{min-width:0;width:100%}#stage text:not([font-size]),#stage text[font-size="9"],#stage text[font-size="11"],#stage text[font-size="12"],#stage text[font-size="13"],#stage text[font-size="14"],#stage text[font-size="15"],#stage text[font-size="16"]{font-size:17px}}
 #ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}#ov[hidden]{display:none}
 #ov>div{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:12px;max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:16px}#ov h2{margin:8px 0}
 .hb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}.hb button{cursor:pointer}
@@ -40,7 +41,7 @@ code{word-break:break-all;background:var(--bg);padding:2px 6px;border-radius:6px
 .mi:empty{display:none}#sd{margin:0 6px}
 </style></head><body>
 <header><h1>🌐 Belajar Jaringan Komputer Dasar Berbasis Simulasi dan Interaktif</h1><p><b>Petualangan Teknisi Jaringan Kampus Cakrawala.</b> Kerjakan misi di setiap tahap. Bulatan bertanda ✓ berarti misinya selesai. Bulatan bergaris putus adalah tahap pendalaman (opsional); 21 tahap inti cukup untuk sekitar 85 menit. Catatan: alamat IP, angka kecepatan, dan latency di aplikasi ini adalah ilustrasi. Skor pertanyaan: <b id="sc">0/0</b>. Tidak ada batas waktu: kemajuan tersimpan otomatis di perangkat ini, jadi boleh dicicil.</p><div class="hb"><button id="dv">🧰 Galeri perangkat</button><button id="ib">⚡ Insiden</button><button id="sb">📜 Cerita wilayah</button><button id="bb">🏆 Pangkat dan lencana</button><button id="sm">📊 Ringkasan hasil</button><button id="gl">📖 Glosarium</button><button id="rs">Mulai ulang kemajuan</button><button id="pt">💰 Poin</button><button id="ad" hidden>🛠️ Admin</button><button id="cu">Keluar</button></div><div id="gs"><span id="gp"></span> <b id="sd" title="Saldo poin"></b> <b id="gr"></b> <span id="gx"></span> <span id="gw"></span><div id="gbar" aria-hidden="true"><i></i></div></div><nav id="nav" aria-label="Tahap simulasi"></nav><div id="bar"><i></i></div></header>
-<main><div class="box"><svg id="stage" viewBox="0 0 800 420" role="group" aria-label="Area simulasi"></svg></div>
+<main><div class="box"><svg id="stage" viewBox="0 0 800 420" role="group" aria-label="Area simulasi"></svg><p class="rot">Tip: putar ponsel ke mode mendatar atau cubit layar untuk memperbesar gambar.</p></div>
 <aside class="box"><h2 id="tt"></h2><p id="lv" style="color:var(--mu);font-size:14px;margin:0"></p><p id="dd"></p><p id="mm" class="mi"></p><div id="dvr"></div><div id="ctl"></div><div id="msg" aria-live="polite"></div><div id="out" aria-live="polite"></div><div id="qz"></div><div class="pn"><button id="pv">← Sebelumnya</button><button id="nx">Lanjut →</button></div></aside></main>
 <div id="wl" hidden role="dialog" aria-modal="true" aria-labelledby="wlt"><div id="wlb"></div></div>
 <div id="tst" role="status" aria-live="polite" hidden></div>
