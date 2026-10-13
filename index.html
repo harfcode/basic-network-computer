@@ -235,7 +235,7 @@ document.addEventListener('keydown',e=>{if(OV.hidden)return;if(e.key=='Escape')r
 const nm=p=>ST[p].t.replace(/^\d+\. /,''),pos=id=>ST.findIndex(s=>s.id==id);
 function sumData(){const v=Object.values(qa);return{tot:ST.length,dn:Object.keys(done).length,core:ST.filter(s=>s.core).length,cd:ST.filter((s,i)=>s.core&&done[i]).length,sc:v.filter(x=>x.ok).length,nq:v.length,
  redo:ST.map((s,i)=>i).filter(i=>(qa[ST[i].id]&&!qa[ST[i].id].ok)||(ST[i].core&&!done[i])).map(i=>(i+1)+'. '+nm(i))}}
-function sumText(){const d=sumData(),L=['Ringkasan Belajar Jaringan Komputer Dasar (Petualangan Teknisi Jaringan Kampus)'];if(PROF)L.push('Nama: '+PROF.n,'Email: '+PROF.e);
+function sumText(){const d=sumData(),L=['Ringkasan Belajar Jaringan Komputer Dasar (Petualangan Teknisi Jaringan Kampus)'];{const P=window.cloudProfil&&window.cloudProfil();if(P&&P.nama)L.push('Nama: '+P.nama,'Email: '+(P.email||'-'))}
  L.push('Tanggal: '+new Date().toLocaleString('id-ID'),`Tahap selesai: ${d.dn}/${d.tot} (inti ${d.cd}/${d.core})`,`Skor pertanyaan: ${d.sc}/${d.nq}`);if(typeof gSum=='function')L.push(...gSum());
  PH.forEach(([n,ids])=>{L.push('',n);ids.forEach(id=>{const p=pos(id);L.push(`  ${done[p]?'[v]':'[ ]'} ${p+1}. ${nm(p)}${ST[p].core?'':' (pendalaman)'}${qa[id]?(qa[id].ok?' - pertanyaan benar':' - pertanyaan salah'):''}`)})});
  L.push('','Perlu diulang: '+(d.redo.join('; ')||'tidak ada'));return L.join('\n')}
@@ -374,5 +374,5 @@ $('#cu').onclick=()=>{window.cloudKeluar&&window.cloudKeluar()};
 })();
 </script>
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" crossorigin="anonymous"></script>
+<script src="vendor/supabase-2.45.4.js"></script>
 <script src="cloud.js"></script></body></html>

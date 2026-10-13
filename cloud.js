@@ -13,6 +13,7 @@
     'Pengelola dapat melihat kemajuan belajar peserta yang tergabung dalam kelas yang sama, termasuk ringkasan statistik kelas.',
     'Bila Anda menerbitkan sertifikat, nama pada sertifikat dapat diperiksa siapa saja yang memegang kodenya (hanya nama, tanggal, dan penerbit). Sertifikat dihapus bersama akun dan dapat dicabut pengelola bila terbukti ada kecurangan.'
   ];
+  window.cloudProfil = function () { return PROFIL; };
   var sb = null, S = {}, W = {}, HAK = {}, PROFIL = null, SALDO = 0, UID = null, TUTUP = false;
   var $ = function (s) { return document.querySelector(s); };
 
