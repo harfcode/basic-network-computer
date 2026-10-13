@@ -2,23 +2,7 @@
    Keamanan sebenarnya ada di basis data (fungsi admin_* memeriksa is_admin()); berkas ini hanya tampilan. */
 (function () {
   'use strict';
-  var C;
-  function tabel(kolom, baris) {
-    var t = C.el('table', { style: 'border-collapse:collapse;width:100%;font-size:14px' }), h = C.el('tr');
-    kolom.forEach(function (k) { h.append(C.el('th', { style: 'text-align:left;border-bottom:2px solid var(--bd);padding:4px' }, k)); }); t.append(h);
-    baris.forEach(function (r) { var tr = C.el('tr'); r.forEach(function (c) { tr.append(C.el('td', { style: 'border-bottom:1px solid var(--bd);padding:4px;word-break:break-word' }, c == null ? '' : c)); }); t.append(tr); });
-    return C.el('div', { style: 'overflow-x:auto' }, t);
-  }
-  function csvSel(v) { v = v == null ? '' : String(v); if (/^[=+\-@\t\r]/.test(v)) v = "'" + v; return '"' + v.replace(/"/g, '""') + '"'; }
-  function unduh(nama, kolom, baris) {
-    var teks = '﻿' + [kolom].concat(baris).map(function (r) { return r.map(csvSel).join(','); }).join('\r\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([teks], { type: 'text/csv;charset=utf-8' })); a.download = nama; document.body.append(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
-  }
-  async function rpc(n, a) { var r = await C.sb.rpc(n, a); if (r.error) throw r.error; return r.data; }
-  function aman(f) { return async function () { try { await f.apply(null, arguments); } catch (e) { C.toast(C.errTxt(e)); } }; }
-  function bagian(b, judul) { b.append(C.el('h3', { style: 'margin:18px 0 6px' }, judul)); }
-
+  var C, B, tabel, unduh, rpc, aman, bagian, batang, tabelDetail, judulTahap;
   async function statistik(b) {
     var s = await rpc('admin_statistik'), w = C.wilayah;
     bagian(b, 'Ringkasan');
@@ -30,82 +14,100 @@
   }
 
   /* ---------- analitik kelas ---------- */
-  function gayaAdmin() {
-    if (document.getElementById('gaya-admin')) return;
-    var st = document.createElement('style'); st.id = 'gaya-admin';
-    st.textContent = [
-      '.ak{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:8px 0}',
-      '.ak div{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;background:var(--bg)}',
-      '.ak b{display:block;font-size:26px;line-height:1.1}.ak span{font-size:13px;color:var(--mu)}',
-      '.ab-g{margin:12px 0 2px;font-weight:700;font-size:13px;color:var(--mu);border-bottom:1px solid var(--bd)}',
-      '.ab-r{display:grid;grid-template-columns:minmax(120px,40%) 1fr 92px;gap:8px;align-items:center;margin:3px 0;font-size:13px}',
-      '.ab-t{height:10px;background:rgba(127,127,127,.2);border-radius:2px}',
-      '.ab-t i{display:block;height:100%;background:var(--ac);border-radius:0 4px 4px 0;min-width:2px}',
-      '.ab-t i.nol{display:none}.ab-v{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}',
-      '@media(max-width:520px){.ab-r{grid-template-columns:1fr 96px}.ab-l{grid-column:1/-1}.ab-t{grid-column:1}}',
-      'details.ab-d{margin:6px 0}details.ab-d summary{cursor:pointer;color:var(--mu);font-size:13px}'
-    ].join('\n');
-    document.head.append(st);
-  }
-  function batang(items) {
-    var w = C.el('div', { role: 'list' });
-    items.forEach(function (it) {
-      if (it.grup) { w.append(C.el('div', { 'class': 'ab-g' }, it.grup)); return; }
-      var pct = it.maks > 0 ? Math.max(0, Math.min(100, it.nilai * 100 / it.maks)) : 0;
-      w.append(C.el('div', { 'class': 'ab-r', role: 'listitem', title: it.tip || '' }, C.el('span', { 'class': 'ab-l' }, it.label),
-        C.el('span', { 'class': 'ab-t', 'aria-hidden': 'true' }, C.el('i', { 'class': pct ? '' : 'nol', style: 'width:' + pct + '%' })), C.el('span', { 'class': 'ab-v' }, it.teks)));
-    });
-    return w;
-  }
-  function tabelDetail(judul, kolom, baris) { return C.el('details', { 'class': 'ab-d' }, C.el('summary', null, 'Lihat ' + judul + ' sebagai tabel'), tabel(kolom, baris)); }
-  function judulTahap(id) { var i = typeof ST !== 'undefined' ? ST.findIndex(function (x) { return x.id == id; }) : -1; return i >= 0 ? (i + 1) + '. ' + ST[i].t.replace(/^\d+\. /, '') : 'Tahap ' + id; }
-
   async function analitik(b) {
-    gayaAdmin(); bagian(b, 'Analitik kelas');
+    B.gaya(); bagian(b, 'Analitik kelas');
     var pil = C.el('select', { 'aria-label': 'Pilih kelas untuk analitik' }, C.el('option', { value: '' }, 'Semua peserta')), isi = C.el('div', { 'aria-live': 'polite' });
     var rk = await C.sb.from('kelas').select('id,nama').order('dibuat', { ascending: false }); (rk.data || []).forEach(function (k) { pil.append(C.el('option', { value: k.id }, k.nama)); });
-    async function muat() {
-      isi.textContent = 'Memuat…';
-      var a = await rpc('admin_analitik', { p_kelas: pil.value || null }); isi.innerHTML = '';
-      if (!a.peserta) { isi.append(C.el('p', null, 'Belum ada peserta di pilihan ini.')); return; }
-      var P = a.peserta, total = typeof ST !== 'undefined' ? ST.length : 29;
-      isi.append(C.el('div', { 'class': 'ak' },
-        C.el('div', null, C.el('b', null, P), C.el('span', null, 'peserta')),
-        C.el('div', null, C.el('b', null, a.aktif_7_hari + ' (' + Math.round(a.aktif_7_hari * 100 / P) + '%)'), C.el('span', null, 'aktif 7 hari terakhir')),
-        C.el('div', null, C.el('b', null, a.rata_tahap), C.el('span', null, 'rata-rata tahap selesai dari ' + total)),
-        C.el('div', null, C.el('b', null, a.sertifikat), C.el('span', null, 'sertifikat terbit'))));
-      // 1. kemajuan per tahap, dikelompokkan seperti navigasi
-      var items = [], tb = [];
-      (typeof PH !== 'undefined' ? PH : [['Semua tahap', ST.map(function (x) { return x.id; })]]).forEach(function (g) {
-        items.push({ grup: g[0] });
-        g[1].forEach(function (id) { var n = a.tahap[id] || 0, jd = judulTahap(id); items.push({ label: jd, nilai: n, maks: P, teks: n + ' (' + Math.round(n * 100 / P) + '%)', tip: jd + ': ' + n + ' dari ' + P + ' peserta' }); tb.push([jd, n, Math.round(n * 100 / P) + '%']); });
-      });
-      isi.append(C.el('h4', null, 'Peserta yang menyelesaikan tiap tahap'), batang(items), tabelDetail('kemajuan per tahap', ['Tahap', 'Selesai', 'Persen'], tb));
-      // 2. soal tersulit
-      var ks = Object.keys(a.kuis).map(function (id) { var x = a.kuis[id]; return { id: id, b: x.b, t: x.t, p: x.t ? x.b * 100 / x.t : 0 }; }).filter(function (x) { return x.t >= Math.min(3, P); }).sort(function (x, y) { return x.p - y.p || y.t - x.t; });
-      isi.append(C.el('h4', null, 'Kuis yang paling banyak dijawab salah (perlu dibahas ulang)'));
-      if (!ks.length) isi.append(C.el('p', null, 'Belum cukup jawaban kuis (minimal 3 jawaban per tahap).'));
-      else { var sulit = ks.slice(0, 8); isi.append(batang(sulit.map(function (x) { var jd = judulTahap(x.id); return { label: jd, nilai: x.p, maks: 100, teks: Math.round(x.p) + '% (' + x.b + '/' + x.t + ')', tip: jd + ': ' + x.b + ' benar dari ' + x.t + ' jawaban' }; })),
-        tabelDetail('kuis', ['Tahap', 'Benar', 'Dijawab', 'Persen benar'], ks.map(function (x) { return [judulTahap(x.id), x.b, x.t, Math.round(x.p) + '%']; }))); }
-      // 3. sebaran kemajuan
-      var seb = a.sebaran.map(function (x) { var sd = Math.min(x.dari + 4, total); return { label: x.dari + '–' + sd + ' tahap selesai', nilai: x.n, maks: P, teks: x.n + ' orang', tip: x.n + ' peserta menyelesaikan ' + x.dari + '–' + sd + ' tahap' }; });
-      isi.append(C.el('h4', null, 'Sebaran kemajuan peserta'), batang(seb));
-      // 4. wilayah
-      var wb = [], regNama = (typeof REG !== 'undefined') ? REG : [];
-      Object.keys(C.wilayah).map(Number).sort(function (x, y) { return x - y; }).forEach(function (id) {
-        var w = C.wilayah[id], dibuka = w.gratis ? P : (a.wilayah[id] || 0), ins = a.insiden[id - 1] || 0;
-        wb.push([id + '. ' + w.nama, w.gratis ? 'gratis' : dibuka + ' (' + Math.round(dibuka * 100 / P) + '%)', ins + ' (' + Math.round(ins * 100 / P) + '%)']);
-      });
-      isi.append(C.el('h4', null, 'Wilayah dibuka dan insiden diselesaikan'), tabel(['Wilayah', 'Dibuka', 'Insiden selesai'], wb));
-      // 5. tertinggal
-      isi.append(C.el('h4', null, 'Peserta yang belum aktif 7 hari atau lebih (maks. 50)'));
-      if (!a.tertinggal.length) isi.append(C.el('p', null, 'Tidak ada. Semua peserta aktif dalam 7 hari terakhir.'));
-      else {
-        var tr = a.tertinggal.map(function (x) { return [x.nama, x.email, x.tahap, x.diubah ? new Date(x.diubah).toLocaleDateString('id-ID') : 'belum pernah']; });
-        isi.append(tabel(['Nama', 'Email', 'Tahap selesai', 'Terakhir aktif'], tr), C.btn('Unduh CSV peserta tertinggal', function () { unduh('peserta-tertinggal.csv', ['nama', 'email', 'tahap_selesai', 'terakhir_aktif'], tr); }));
-      }
-    }
+    async function muat() { isi.textContent = 'Memuat…'; B.tampilAnalitik(isi, await rpc('admin_analitik', { p_kelas: pil.value || null })); }
     pil.onchange = aman(muat); b.append(pil, isi); await muat();
+  }
+
+  /* ---------- guru ---------- */
+  async function guruAdmin(b) {
+    bagian(b, 'Guru'); var w = C.el('div'); b.append(w);
+    async function muat() {
+      var d = await rpc('admin_daftar_guru', {}); w.innerHTML = '';
+      var tunggu = d.filter(function (x) { return x.diminta; }), aktif = d.filter(function (x) { return x.peran === 'guru'; });
+      w.append(C.el('h4', null, 'Permintaan menjadi guru (' + tunggu.length + ')'));
+      if (!tunggu.length) w.append(C.el('p', null, 'Tidak ada permintaan yang menunggu.'));
+      tunggu.forEach(function (x) {
+        w.append(C.el('p', null, C.el('b', null, x.nama || '(tanpa nama)'), ' · ' + x.email + ' · ' + (x.diminta_pada ? new Date(x.diminta_pada).toLocaleDateString('id-ID') : ''), ' ',
+          C.btn('Setujui', aman(async function () { var r = await rpc('admin_set_guru', { p_id: x.id, p_jadi: true }); C.toast(r.ok ? 'Disetujui.' : r.pesan); await muat(); })),
+          C.btn('Tolak', aman(async function () { var r = await rpc('admin_set_guru', { p_id: x.id, p_jadi: false }); C.toast(r.ok ? 'Ditolak.' : r.pesan); await muat(); }))));
+      });
+      w.append(C.el('h4', null, 'Guru aktif (' + aktif.length + ')'));
+      if (!aktif.length) w.append(C.el('p', null, 'Belum ada guru.'));
+      aktif.forEach(function (x) {
+        w.append(C.el('p', null, C.el('b', null, x.nama || '(tanpa nama)'), ' · ' + x.email + ' · ' + x.kelas + ' kelas ',
+          C.btn('Cabut peran guru', aman(async function () { var r = await rpc('admin_set_guru', { p_id: x.id, p_jadi: false }); C.toast(r.ok ? 'Peran dicabut.' : r.pesan); await muat(); }))));
+      });
+    }
+    await muat();
+  }
+  async function diskonAdmin(b) {
+    bagian(b, 'Pengajuan diskon pasca-tes'); var w = C.el('div'); b.append(w);
+    async function muat() {
+      var d = await rpc('admin_daftar_diskon', {}); w.innerHTML = '';
+      if (!d.length) { w.append(C.el('p', null, 'Belum ada pengajuan.')); return; }
+      d.forEach(function (x) {
+        var p = C.el('p', null, C.el('b', null, x.kelas), ' · guru: ' + x.guru + ' · diminta ' + x.persen_diminta + '% · "' + x.alasan + '" · ' + (x.status === 'menunggu' ? 'MENUNGGU' : x.status + (x.persen_disetujui != null ? ' (' + x.persen_disetujui + '%)' : '')) + ' · ' + new Date(x.dibuat).toLocaleDateString('id-ID'));
+        if (x.status === 'menunggu') {
+          var ps = C.inp('%', { type: 'number', min: '0', max: '100', 'aria-label': 'Persen disetujui untuk ' + x.kelas }); ps.value = x.persen_diminta; ps.style.width = '80px';
+          p.append(C.el('br'), ps, C.btn('Setujui', aman(async function () { var r = await rpc('admin_putuskan_diskon', { p_id: x.id, p_setuju: true, p_persen: parseInt(ps.value, 10) }); C.toast(r.ok ? 'Disetujui.' : r.pesan); await muat(); })),
+            C.btn('Tolak', aman(async function () { var r = await rpc('admin_putuskan_diskon', { p_id: x.id, p_setuju: false, p_persen: null }); C.toast(r.ok ? 'Ditolak.' : r.pesan); await muat(); })));
+        }
+        w.append(p);
+      });
+    }
+    await muat();
+  }
+
+  /* ---------- bank soal dan paket bawaan ---------- */
+  async function paketBawaan(b) {
+    bagian(b, 'Paket tes bawaan (siswa mandiri dan kelas yang belum menyusun paket sendiri)');
+    var bank = await rpc('guru_bank_soal', {}), info = await rpc('admin_tes_bawaan', {});
+    b.append(B.editorPaket({ bank: bank, info: info, jadwal: false, simpan: function (pra, pasca, acak, praAktif) { return rpc('admin_simpan_tes_bawaan', { p_pra: pra, p_pasca: pasca, p_acak: acak, p_pra_aktif: praAktif }); } }));
+  }
+  async function bankSoal(b) {
+    bagian(b, 'Bank soal'); B.gaya();
+    var w = C.el('div'); b.append(C.el('p', { style: 'color:var(--mu)' }, 'Pilihan jawaban diacak untuk tiap siswa, jadi tulis tiap pilihan berdiri sendiri (jangan "semua benar", "A dan B", dst.). Soal yang dinonaktifkan tidak muncul bagi guru.'), w);
+    var tujuan = await rpc('daftar_tujuan_tes', {});
+    async function muat() {
+      var d = await rpc('admin_daftar_soal', {}); w.innerHTML = '';
+      w.append(C.btn('+ Tambah soal', function () { form(null); }));
+      var per = {}; d.forEach(function (s) { (per[s.tujuan] = per[s.tujuan] || []).push(s); });
+      tujuan.forEach(function (t) {
+        var det = C.el('details', { 'class': 'pk-g' }, C.el('summary', null, t.id + '. ' + t.nama + ' (' + (per[t.id] || []).length + ' soal)'));
+        (per[t.id] || []).forEach(function (s) {
+          det.append(C.el('div', { 'class': 'pk-s' }, C.el('div', null, '#' + s.id + (s.aktif ? ' ' : ' [NONAKTIF] ') + s.teks, C.el('small', null, s.pilihan.map(function (o, i) { return (i === s.kunci ? '✓ ' : '· ') + o; }).join('  |  '))), C.btn('Sunting', function () { form(s); })));
+        });
+        w.append(det);
+      });
+    }
+    function form(s) {
+      var tj = C.el('select', { 'aria-label': 'Tujuan belajar' }); tujuan.forEach(function (t) { tj.append(C.el('option', { value: t.id }, t.id + '. ' + t.nama)); }); tj.value = s ? s.tujuan : tujuan[0].id;
+      var tk = C.el('textarea', { rows: '3', style: 'width:100%', 'aria-label': 'Teks soal', maxlength: '400' }); tk.value = s ? s.teks : '';
+      var op = [], rd = [], baris = C.el('div');
+      for (var i = 0; i < 5; i++) {
+        (function (i) {
+          var o = C.inp('Pilihan ' + (i + 1) + (i < 3 ? ' (wajib)' : ' (opsional)'), { 'aria-label': 'Pilihan ' + (i + 1), maxlength: '200' }); o.value = s && s.pilihan[i] ? s.pilihan[i] : '';
+          var r = C.el('input', { type: 'radio', name: 'kunci-soal', 'aria-label': 'Pilihan ' + (i + 1) + ' adalah kunci' }); if (s ? s.kunci === i : i === 0) r.checked = true;
+          op.push(o); rd.push(r); baris.append(C.el('div', { style: 'display:flex;gap:6px;align-items:center' }, r, o));
+        })(i);
+      }
+      var pb = C.el('textarea', { rows: '2', style: 'width:100%', 'aria-label': 'Pembahasan', maxlength: '600' }); pb.value = s ? s.pembahasan : '';
+      var ak = C.el('input', { type: 'checkbox' }); ak.checked = s ? s.aktif : true;
+      C.openOv(s ? 'Sunting soal #' + s.id : 'Tambah soal', function (bb) {
+        bb.append(C.el('label', null, 'Tujuan belajar'), tj, C.el('label', null, 'Teks soal'), tk, C.el('p', null, 'Pilihan jawaban (pilih bulatan di kiri untuk kunci):'), baris,
+          C.el('label', null, 'Pembahasan (ditampilkan setelah peserta lulus)'), pb, C.el('p', null, C.el('label', null, ak, ' Aktif (dapat dipilih guru)')),
+          C.btn('Simpan soal', aman(async function () {
+            var pil = [], kunci = 0; op.forEach(function (o, i) { if (o.value.trim()) { if (rd[i].checked) kunci = pil.length; pil.push(o.value.trim()); } });
+            var r = await rpc('admin_simpan_soal', { p_id: s ? s.id : null, p_tujuan: parseInt(tj.value, 10), p_teks: tk.value, p_pilihan: pil, p_kunci: kunci, p_pembahasan: pb.value, p_aktif: ak.checked });
+            if (!r.ok) { C.toast(r.pesan); return; } C.toast('Soal tersimpan.'); C.closeOv(); window.adminBuka(C);
+          })));
+      });
+    }
+    await muat();
   }
 
   async function sertifikatAdmin(b) {
@@ -153,13 +155,21 @@
     bagian(b, 'Kelas');
     var daftar = C.el('div'), nm = C.inp('Nama kelas baru', { 'aria-label': 'Nama kelas' }), prog = C.el('div');
     async function muat() {
-      var r = await C.sb.from('kelas').select('id,nama,kode').order('dibuat', { ascending: false }); if (r.error) throw r.error; daftar.innerHTML = '';
+      var r = await C.sb.from('kelas').select('id,nama,kode,pemilik_id,dibuka,diskon_pascates').order('dibuat', { ascending: false }); if (r.error) throw r.error; daftar.innerHTML = '';
+      var gr = (await rpc('admin_daftar_guru', {})).filter(function (x) { return x.peran === 'guru'; });
       r.data.forEach(function (k) {
-        daftar.append(C.el('p', null, C.el('b', null, k.nama), ' · kode kelas: ', C.el('code', null, k.kode), ' ', C.btn('Lihat kemajuan', aman(async function () {
-          var d = await rpc('admin_progres_kelas', { p_kelas: k.id }); prog.innerHTML = '';
-          var br = d.map(function (x) { return [x.nama, x.email, x.tahap_selesai, x.skor_benar + '/' + x.skor_total, x.wilayah_dibuka, x.diubah ? new Date(x.diubah).toLocaleString('id-ID') : '']; });
-          prog.append(C.el('h4', null, 'Kemajuan: ' + k.nama), tabel(['Nama', 'Email', 'Tahap selesai', 'Skor', 'Wilayah dibuka', 'Terakhir'], br), C.btn('Unduh CSV', function () { unduh('kelas-' + k.nama + '.csv', ['nama', 'email', 'tahap_selesai', 'skor', 'wilayah_dibuka', 'terakhir'], br); }));
-        }))));
+        var pm = C.el('select', { 'aria-label': 'Pemilik kelas ' + k.nama }, C.el('option', { value: '' }, '(tanpa guru)'));
+        gr.forEach(function (g) { pm.append(C.el('option', { value: g.id }, g.nama || g.email)); }); pm.value = k.pemilik_id || '';
+        var df = C.inp('Diskon pasca-tes (%)', { type: 'number', min: '0', max: '100', 'aria-label': 'Diskon pasca-tes kelas ' + k.nama }); df.value = k.diskon_pascates; df.style.width = '90px';
+        daftar.append(C.el('div', { style: 'border-top:1px solid var(--bd);padding:6px 0' },
+          C.el('b', null, k.nama), ' · kode kelas: ', C.el('code', null, k.kode), k.dibuka ? '' : ' · (tertutup)', C.el('br'),
+          C.el('label', null, 'Guru: '), pm, C.btn('Serahkan', aman(async function () { var x = await rpc('admin_serahkan_kelas', { p_kelas: k.id, p_guru: pm.value || null }); C.toast(x.ok ? 'Tersimpan.' : x.pesan); await muat(); })), C.el('br'),
+          C.el('label', null, 'Diskon pasca-tes: '), df, ' %', C.btn('Simpan diskon', aman(async function () { var x = await rpc('admin_set_diskon_kelas', { p_kelas: k.id, p_persen: parseInt(df.value, 10) }); C.toast(x.ok ? 'Tersimpan.' : x.pesan); })), C.el('br'),
+          C.btn('Lihat kemajuan', aman(async function () {
+            var d = await rpc('admin_progres_kelas', { p_kelas: k.id }); prog.innerHTML = '';
+            var br = d.map(function (x) { return [x.nama, x.email, x.tahap_selesai, x.skor_benar + '/' + x.skor_total, x.wilayah_dibuka, x.diubah ? new Date(x.diubah).toLocaleString('id-ID') : '']; });
+            prog.append(C.el('h4', null, 'Kemajuan: ' + k.nama), tabel(['Nama', 'Email', 'Tahap selesai', 'Skor', 'Wilayah dibuka', 'Terakhir'], br), C.btn('Unduh CSV', function () { unduh('kelas-' + k.nama + '.csv', ['nama', 'email', 'tahap_selesai', 'skor', 'wilayah_dibuka', 'terakhir'], br); }));
+          }))));
       });
     }
     var buat = C.btn('Buat kelas', aman(async function () { var d = await rpc('admin_buat_kelas', { p_nama: nm.value }); C.toast('Kelas dibuat. Kode: ' + d.kode); nm.value = ''; await muat(); }));
@@ -178,7 +188,7 @@
     baris('nilai_poin_rp', 'Nilai satu poin (Rupiah)', 'num'); baris('bundel_diskon_persen', 'Diskon paket semua wilayah (%)', 'num');
     baris('transfer_aktif', 'Pemindahan poin antarpeserta', 'bool'); baris('transfer_min', 'Pemindahan: minimal poin', 'num'); baris('transfer_maks_harian', 'Pemindahan: maksimal poin per hari', 'num'); baris('transfer_tahan_jam', 'Pemindahan: masa tahan poin baru (jam)', 'num');
     baris('versi_ketentuan', 'Versi ketentuan (ubah = semua peserta diminta menyetujui ulang)', 'str');
-    baris('sertifikat_min_skor', 'Sertifikat: persen jawaban kuis benar minimal', 'num'); baris('sertifikat_penerbit', 'Sertifikat: nama penerbit (tercetak pada sertifikat baru)', 'str'); baris('sertifikat_penandatangan', 'Sertifikat: nama penandatangan (boleh kosong)', 'str');
+    baris('sertifikat_min_skor', 'Nilai minimal pasca-tes untuk lulus dan berhak sertifikat (%)', 'num'); baris('harga_pascates', 'Harga pasca-tes (poin per percobaan, sebelum diskon kelas)', 'num'); baris('pascates_maks_percobaan', 'Batas percobaan pasca-tes per peserta', 'num'); baris('sertifikat_penerbit', 'Sertifikat: nama penerbit (tercetak pada sertifikat baru)', 'str'); baris('sertifikat_penandatangan', 'Sertifikat: nama penandatangan (boleh kosong)', 'str');
     b.append(C.el('h4', null, 'Harga wilayah (poin) dan versi berkas'));
     Object.keys(W).map(Number).sort().forEach(function (id) {
       var w = W[id]; if (w.gratis) { b.append(C.el('p', null, 'Wilayah ' + id + ' ' + w.nama + ': gratis')); return; }
@@ -203,11 +213,11 @@
     })), hasil);
   }
   window.adminBuka = function (ctx) {
-    C = ctx;
+    C = ctx; B = window.Bersama(C); tabel = B.tabel; unduh = B.unduh; rpc = B.rpc; aman = B.aman; bagian = B.bagian; batang = B.batang; tabelDetail = B.tabelDetail; judulTahap = B.judulTahap;
     C.openOv('🛠️ Panel pengelola', function (b) {
       b.append(C.el('p', { style: 'color:var(--mu)' }, 'Setiap perubahan dicatat di log admin. Unduh buku poin (CSV) secara berkala sebagai cadangan.'));
       (async function () {
-        for (var f of [statistik, analitik, sertifikatAdmin, peserta, voucher, kelas, pengaturan, buku]) { try { await f(b); } catch (e) { b.append(C.el('p', { role: 'alert' }, 'Gagal memuat bagian: ' + C.errTxt(e))); } }
+        for (var f of [statistik, analitik, guruAdmin, diskonAdmin, paketBawaan, bankSoal, sertifikatAdmin, peserta, voucher, kelas, pengaturan, buku]) { try { await f(b); } catch (e) { b.append(C.el('p', { role: 'alert' }, 'Gagal memuat bagian: ' + C.errTxt(e))); } }
       })();
     });
   };

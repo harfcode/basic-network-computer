@@ -10,7 +10,9 @@
     'Poin diperoleh dari pengelola (pemberian langsung), voucher, atau kode kelas. Nilai satu poin dan harga wilayah dapat diubah pengelola untuk pembelian berikutnya.',
     'Materi wilayah berbayar hanya untuk penggunaan belajar pribadi. Dilarang menyalin atau menyebarkannya.',
     'Jika Anda menghapus akun, kemajuan dan sisa poin hilang dan tidak dapat dipulihkan. Catatan transaksi tetap disimpan tanpa identitas Anda.',
-    'Pengelola dapat melihat kemajuan belajar peserta yang tergabung dalam kelas yang sama, termasuk ringkasan statistik kelas.',
+    'Pengelola dapat melihat kemajuan belajar peserta. Jika Anda bergabung ke kelas, guru pemilik kelas dapat melihat nama, email, kemajuan, serta hasil pra-tes dan pasca-tes Anda, dan ringkasan statistik kelas.',
+    'Pra-tes gratis dan dapat dikerjakan satu kali. Pasca-tes memakai poin pada setiap percobaan (jumlah percobaan dibatasi) dan hasil terbaiknya menjadi syarat sertifikat. Poin pasca-tes tidak dikembalikan, termasuk bila Anda tidak lulus.',
+    'Pilihan guru bersifat permintaan: akun menjadi guru hanya setelah disetujui pengelola.',
     'Bila Anda menerbitkan sertifikat, nama pada sertifikat dapat diperiksa siapa saja yang memegang kodenya (hanya nama, tanggal, dan penerbit). Sertifikat dihapus bersama akun dan dapat dicabut pengelola bila terbukti ada kecurangan.'
   ];
   window.cloudProfil = function () { return PROFIL; };
@@ -78,6 +80,39 @@
     }, 'o');
     var ul = el('ul'); KET_TEKS.forEach(function (t) { ul.append(el('li', null, t)); });
     layar('Ketentuan penggunaan (versi ' + S.versi_ketentuan + ')', [ul, el('label', null, cek, ' Saya telah membaca dan menyetujui ketentuan di atas.'), el('p'), lanjut]);
+  }
+
+  /* ---------- peran: siswa atau guru ---------- */
+  async function muatProfil() {
+    var p = await sb.from('profiles').select('id,email,nama,is_admin,kelas_id,ketentuan_versi,peran,guru_diminta,peran_diatur').eq('id', UID).maybeSingle();
+    if (p.error) throw p.error; if (p.data) { var n = PROFIL && PROFIL.nama; PROFIL = p.data; if (!PROFIL.nama && n) PROFIL.nama = n; }
+  }
+  function layarPeran(sesudah) {
+    var selesai = async function () { try { await muatProfil(); } catch (e) { /* tidak fatal */ } sesudah(); };
+    layar('Anda mendaftar sebagai apa?', [
+      el('p', null, 'Pilihan ini menentukan tampilan Anda. Sebagai siswa Anda dapat bergabung ke kelas dengan kode dari guru, atau belajar mandiri.'),
+      btn('Saya siswa', layarSiswa, 'o'), el('p'),
+      btn('Saya guru / pengajar', async function () {
+        try { var r = await sb.rpc('atur_peran', { p_peran: 'guru' }); if (r.error) throw r.error; if (!r.data.ok) { toast(r.data.pesan); return; } }
+        catch (e) { toast(errTxt(e)); return; }
+        layar('Permintaan guru tercatat', [el('p', null, 'Admin akan meninjau permintaan Anda. Sampai disetujui, akun Anda berfungsi sebagai siswa mandiri. Setelah disetujui, tombol "Kelas" muncul di bagian atas aplikasi (muat ulang halaman).'), btn('Lanjut', selesai, 'o')]);
+      })
+    ]);
+    function layarSiswa() {
+      var kode = inp('Kode kelas dari guru', { maxlength: '40', 'aria-label': 'Kode kelas' });
+      var gb = btn('Masuk kelas', async function () {
+        if (!kode.value.trim()) { toast('Isi kode kelas, atau pilih belajar mandiri.'); return; }
+        gb.disabled = true;
+        try { var r = await sb.rpc('atur_peran', { p_peran: 'siswa', p_kode: kode.value }); if (r.error) throw r.error; if (!r.data.ok) { toast(r.data.pesan); gb.disabled = false; return; } selesai(); }
+        catch (e) { gb.disabled = false; toast(errTxt(e)); }
+      }, 'o');
+      var md = btn('Belajar mandiri (tanpa kelas)', async function () {
+        md.disabled = true;
+        try { var r = await sb.rpc('atur_peran', { p_peran: 'siswa' }); if (r.error) throw r.error; if (!r.data.ok) { toast(r.data.pesan); md.disabled = false; return; } selesai(); }
+        catch (e) { md.disabled = false; toast(errTxt(e)); }
+      });
+      layar('Masuk kelas atau mandiri?', [el('p', null, 'Punya kode kelas dari guru? Masukkan di sini. Anda juga dapat bergabung nanti lewat tombol Poin.'), kode, gb, el('p'), md]);
+    }
   }
 
   /* ---------- nama ---------- */
@@ -155,7 +190,7 @@
   }
   async function muatSaldo() { var r = await sb.rpc('saldo_saya'); if (r.error) throw r.error; SALDO = r.data || 0; var sd = $('#sd'); if (sd) sd.textContent = '💰 ' + fmt(SALDO) + ' poin'; }
   async function muatSemuaModul() {
-    var wajib = Object.keys(W).filter(function (id) { return W[id].berkas && (HAK[id] || (PROFIL && PROFIL.is_admin)); });
+    var wajib = Object.keys(W).filter(function (id) { return W[id].berkas && (HAK[id] || (PROFIL && (PROFIL.is_admin || PROFIL.peran === 'guru'))); });
     var gagal = [];
     for (var i = 0; i < wajib.length; i++) { try { await muatModul(+wajib[i]); } catch (e) { gagal.push(W[wajib[i]].nama); } }
     if (gagal.length) toast('Materi belum termuat: ' + gagal.join(', ') + '. Muat ulang halaman.');
@@ -215,7 +250,7 @@
   }
 
   /* ---------- dialog poin ---------- */
-  var JENIS = { manual: 'Pemberian pengelola', bonus: 'Bonus', voucher: 'Tukar voucher', beli_wilayah: 'Buka wilayah', beli_bundel: 'Buka semua wilayah', transfer_keluar: 'Kirim poin', transfer_masuk: 'Terima poin', koreksi: 'Koreksi' };
+  var JENIS = { manual: 'Pemberian pengelola', bonus: 'Bonus', voucher: 'Tukar voucher', beli_wilayah: 'Buka wilayah', beli_bundel: 'Buka semua wilayah', transfer_keluar: 'Kirim poin', transfer_masuk: 'Terima poin', koreksi: 'Koreksi', pasca_tes: 'Pasca-tes' };
   async function dialogPoin(pesan) {
     var rb = await sb.from('buku_poin').select('delta,jenis,alasan,dibuat').order('dibuat', { ascending: false }).limit(15);
     await muatSaldo();
@@ -237,7 +272,17 @@
         try { var r = await sb.rpc('gabung_kelas', { p_kode: kk.value }); if (r.error) throw r.error; if (r.data.ok) PROFIL.kelas_id = r.data.kelas_id || PROFIL.kelas_id; dialogPoin(r.data.pesan || (r.data.ok ? 'Berhasil bergabung.' : 'Gagal.')); }
         catch (e) { kb.disabled = false; toast(errTxt(e)); }
       });
-      b.append(el('h3', null, 'Kelas'), el('p', null, kelas ? 'Anda tergabung di kelas: ' + kelas : 'Anda belum tergabung di kelas.'), kk, kb);
+      b.append(el('h3', null, 'Kelas'), el('p', null, kelas ? 'Anda tergabung di kelas: ' + kelas : 'Anda belum tergabung di kelas.'));
+      if (PROFIL.peran === 'guru') b.append(el('p', null, 'Akun Anda berperan guru; guru tidak bergabung ke kelas lain.'));
+      else {
+        if (kelas) { var kl = btn('Keluar dari kelas', async function () { if (!window.confirm('Keluar dari kelas? Kemajuan dan poin Anda tidak berubah.')) return; try { var r = await sb.rpc('keluar_kelas'); if (r.error) throw r.error; PROFIL.kelas_id = null; dialogPoin('Anda keluar dari kelas.'); } catch (e) { toast(errTxt(e)); } }); b.append(kl); }
+        b.append(kk, kb);
+        if (PROFIL.guru_diminta) b.append(el('p', { role: 'status' }, 'Permintaan menjadi guru menunggu persetujuan admin.'));
+        else {
+          var mg = btn('Ajukan diri sebagai guru', async function () { try { var r = await sb.rpc('minta_guru'); if (r.error) throw r.error; if (r.data.ok) PROFIL.guru_diminta = true; dialogPoin(r.data.pesan); } catch (e) { toast(errTxt(e)); } });
+          b.append(el('p'), mg);
+        }
+      }
       if (S.transfer_aktif === true) {
         var te = inp('Email penerima', { type: 'email', 'aria-label': 'Email penerima' }), tj = inp('Jumlah poin', { type: 'number', min: String(S.transfer_min || 1), 'aria-label': 'Jumlah poin' });
         var tb = btn('Kirim poin', async function () {
@@ -262,6 +307,131 @@
     });
   }
 
+
+
+  /* ---------- tes: pra-tes dan pasca-tes ---------- */
+  function siapkanTes() {
+    var t = $('#ts'); if (!t) return; t.hidden = false; t.onclick = function () { dialogTes(); };
+    sb.rpc('tes_status').then(function (r) { if (!r.error && r.data && r.data.pra.ada && !r.data.pra.selesai) t.textContent = '📝 Tes •'; });
+  }
+  async function dialogTes(pesan) {
+    var r = await sb.rpc('tes_status');
+    if (r.error) { toast('Gagal memuat tes: ' + errTxt(r.error)); return; }
+    var t = r.data, pra = t.pra, pc = t.pasca;
+    openOv('📝 Tes', function (b) {
+      if (pesan) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pesan));
+      b.append(el('h3', null, 'Pra-tes'));
+      if (!pra.ada) b.append(el('p', null, 'Pra-tes tidak diaktifkan untuk Anda.'));
+      else if (pra.selesai) b.append(el('p', null, 'Selesai. Nilai Anda ' + pra.nilai + '% (' + pra.benar + ' dari ' + pra.total + ' benar). Pra-tes hanya dapat dikerjakan satu kali.'));
+      else {
+        b.append(el('p', null, 'Gratis, ' + pra.jumlah_soal + ' soal, satu kali. Tujuannya mengetahui titik awal Anda, bukan menilai. Menjawab "Belum tahu" sama baiknya dengan menebak.'),
+          btn(pra.berjalan ? 'Lanjutkan pra-tes' : 'Mulai pra-tes', function () { mulaiTes('pra'); }, 'o'));
+      }
+      b.append(el('h3', null, 'Pasca-tes'));
+      if (!pc.ada) b.append(el('p', null, 'Pasca-tes belum disiapkan.'));
+      else {
+        var info = el('ul');
+        info.append(el('li', null, pc.jumlah_soal + ' soal, nilai lulus minimal ' + pc.minimal + '%.'),
+          el('li', null, 'Biaya ' + fmt(pc.harga) + ' poin per percobaan' + (pc.diskon ? ' (sudah termasuk diskon kelas ' + pc.diskon + '%)' : '') + ', maksimal ' + pc.maks + ' percobaan. Saldo Anda ' + fmt(pc.saldo) + ' poin.'),
+          el('li', null, 'Percobaan ke-' + Math.min(pc.percobaan + (pc.berjalan ? 0 : 1), pc.maks) + ' dari ' + pc.maks + '. Pasca-tes menjadi syarat sertifikat.'));
+        b.append(info);
+        if (pc.nilai_terbaik != null) b.append(el('p', null, 'Nilai terbaik Anda: ' + pc.nilai_terbaik + '%' + (pc.lulus ? ' ✅ lulus' : '')));
+        if (pc.berjalan) b.append(btn('Lanjutkan pasca-tes (tanpa biaya tambahan)', function () { mulaiTes('pasca'); }, 'o'));
+        else if (pc.lulus) b.append(btn('Lihat sertifikat', function () { dialogSertifikat(); }, 'o'));
+        else if (!pc.tersedia) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pc.alasan));
+        else {
+          var yakin = 0, lbl = 'Mulai pasca-tes (' + fmt(pc.harga) + ' poin)', mb = btn(lbl, function () {
+            if (!yakin) { yakin = 1; mb.textContent = 'Yakin? Klik lagi untuk membayar ' + fmt(pc.harga) + ' poin dan memulai'; setTimeout(function () { yakin = 0; mb.textContent = lbl; }, 4000); return; }
+            mb.disabled = true; mulaiTes('pasca', mb);
+          }, 'o');
+          b.append(mb);
+        }
+      }
+      b.append(el('p', { style: 'color:var(--mu);font-size:14px' }, 'Soal dan urutan pilihan diacak untuk tiap siswa. Jawaban Anda tersimpan setiap kali dipilih, sehingga tes dapat dilanjutkan bila terputus.'));
+    });
+  }
+  async function mulaiTes(jenis, tombol) {
+    try {
+      var r = await sb.rpc('mulai_tes', { p_jenis: jenis }); if (r.error) throw r.error;
+      if (!r.data.ok) { if (tombol) tombol.disabled = false; toast(r.data.pesan); return; }
+      if (jenis === 'pasca') muatSaldo().catch(function () {});
+      jalankanTes(r.data);
+    } catch (e) { if (tombol) tombol.disabled = false; toast(errTxt(e)); }
+  }
+  function jalankanTes(d) {
+    var soal = d.soal, jw = {}, i = 0, antri = Promise.resolve(), judul = d.jenis === 'pra' ? 'Pra-tes' : 'Pasca-tes';
+    Object.keys(d.jawaban || {}).forEach(function (k) { jw[k] = d.jawaban[k]; });
+    openOv('📝 ' + judul, function (b) {
+      function simpan(sid, v) {
+        jw[sid] = v;
+        antri = antri.then(function () { return sb.rpc('simpan_jawaban_tes', { p_percobaan: d.percobaan, p_soal: sid, p_pilihan: v }); })
+          .then(function (r) { if (r.error || !(r.data && r.data.ok)) toast('Jawaban belum tersimpan: ' + (r.error ? errTxt(r.error) : r.data.pesan)); }, function (e) { toast('Jawaban belum tersimpan: ' + errTxt(e)); });
+      }
+      function tampil() {
+        b.innerHTML = '';
+        var s = soal[i], fs = el('fieldset', { style: 'border:1px solid var(--bd);border-radius:10px;padding:8px 12px' }, el('legend', { style: 'font-weight:700' }, 'Soal ' + (i + 1) + ' dari ' + soal.length));
+        fs.append(el('p', null, s.teks));
+        s.pilihan.concat(['Belum tahu']).forEach(function (o, k) {
+          var v = k === s.pilihan.length ? -1 : k, rd = el('input', { type: 'radio', name: 'jwb', value: String(v) });
+          rd.checked = jw[s.id] === v;
+          rd.onchange = function () { simpan(s.id, v); peta(); };
+          fs.append(el('label', { style: 'display:block;margin:6px 0' }, rd, ' ', o));
+        });
+        b.append(fs);
+        var nav = el('p', { style: 'display:flex;gap:8px;flex-wrap:wrap' });
+        var sb1 = btn('← Sebelumnya', function () { i--; tampil(); }); sb1.disabled = i === 0;
+        var sb2 = btn('Berikutnya →', function () { i++; tampil(); }); sb2.disabled = i === soal.length - 1;
+        nav.append(sb1, sb2); b.append(nav);
+        var pt = el('p', { id: 'tes-peta', role: 'group', 'aria-label': 'Daftar soal', style: 'display:flex;gap:4px;flex-wrap:wrap' }); b.append(pt); peta();
+        var sl = btn('Selesai dan kumpulkan', selesai, 'o'); b.append(el('p'), sl);
+        var st1 = fs.querySelector('input:checked') || fs.querySelector('input'); if (st1) st1.focus();
+      }
+      function peta() {
+        var pt = b.querySelector('#tes-peta'); if (!pt) return; pt.innerHTML = '';
+        soal.forEach(function (s, k) {
+          var terjawab = jw[s.id] !== undefined, x = btn(String(k + 1), function () { i = k; tampil(); });
+          x.setAttribute('aria-label', 'Soal ' + (k + 1) + (terjawab ? ', sudah dijawab' : ', belum dijawab') + (k === i ? ', sedang dibuka' : ''));
+          x.style.cssText = 'min-width:36px;' + (terjawab ? 'font-weight:700;' : 'opacity:.7;') + (k === i ? 'outline:2px solid var(--ac);' : ''); pt.append(x);
+        });
+      }
+      var sedangKirim = false;
+      async function selesai() {
+        var kosong = soal.filter(function (s) { return jw[s.id] === undefined; }).length;
+        if (kosong && !window.confirm(kosong + ' soal belum dijawab dan akan dihitung salah. Tetap kumpulkan?')) return;
+        if (sedangKirim) return; sedangKirim = true;
+        try {
+          await antri;
+          var r = await sb.rpc('selesai_tes', { p_percobaan: d.percobaan }); if (r.error) throw r.error;
+          if (!r.data.ok) { toast(r.data.pesan); sedangKirim = false; return; }
+          hasil(r.data);
+        } catch (e) { sedangKirim = false; toast('Gagal mengumpulkan: ' + errTxt(e)); }
+      }
+      function hasil(h) {
+        b.innerHTML = '';
+        var pt = $('#ts'); if (pt) pt.textContent = '📝 Tes';
+        b.append(el('h3', { role: 'status' }, judul + ' selesai: ' + h.nilai + '% (' + h.benar + ' dari ' + h.total + ' benar)'));
+        var lemah = (h.per_tujuan || []).filter(function (t) { return t.benar < t.total; });
+        if (d.jenis === 'pra') b.append(el('p', null, 'Ini titik awal Anda. Hasilnya dipakai untuk melihat kemajuan setelah pasca-tes. Pembahasan soal tidak ditampilkan agar pasca-tes tetap adil.'));
+        else if (h.lulus) b.append(el('p', { style: 'font-weight:700' }, '🎉 Lulus (minimal ' + h.minimal + '%).' + (h.pra != null ? ' Nilai pra-tes Anda ' + h.pra + '%, kini ' + h.nilai + '%.' : '')));
+        else b.append(el('p', { style: 'font-weight:700' }, 'Belum lulus (minimal ' + h.minimal + '%). Sisa percobaan: ' + h.sisa_percobaan + '.'));
+        if (!h.lulus || d.jenis === 'pra') {
+          if (lemah.length) { b.append(el('h4', null, 'Tujuan belajar yang perlu diperkuat')); var ul = el('ul'); lemah.forEach(function (t) { ul.append(el('li', null, t.tujuan + '. ' + t.nama + ': ' + t.benar + ' dari ' + t.total + ' benar')); }); b.append(ul); }
+          if (d.jenis === 'pasca') b.append(el('p', null, 'Ulangi tahap yang berkaitan, lalu coba lagi. Setiap percobaan memakai poin.'));
+        }
+        if (h.ulasan) {
+          b.append(el('h4', null, 'Pembahasan'));
+          h.ulasan.forEach(function (u, n) {
+            var ol = el('ol', { type: 'a' }); u.pilihan.forEach(function (o, k) { ol.append(el('li', null, o + (k === u.benar ? ' ✓ kunci' : '') + (k === u.jawaban && k !== u.benar ? ' ✗ jawaban Anda' : ''))); });
+            b.append(el('div', { style: 'border-top:1px solid var(--bd);padding:6px 0' }, el('p', null, (n + 1) + '. ' + u.teks), ol, el('p', { style: 'color:var(--mu)' }, u.jawaban === -1 ? 'Anda menjawab "Belum tahu". ' : '', u.pembahasan || '')));
+          });
+        }
+        b.append(el('p'), btn('Kembali ke menu Tes', function () { dialogTes(); }, 'o'));
+        if (h.lulus) b.append(btn('Lihat sertifikat', function () { dialogSertifikat(); }));
+      }
+      b.append(el('p', { style: 'color:var(--mu)' }, 'Pilih satu jawaban per soal. Anda dapat kembali ke soal sebelumnya sebelum mengumpulkan.'));
+      tampil();
+    });
+  }
 
   /* ---------- gaya sertifikat dan verifikasi ---------- */
   function pasangGaya() {
@@ -308,7 +478,7 @@
         el('div', { 'class': 'sj' }, 'Petualangan Teknisi Jaringan Kampus'),
         el('div', { 'class': 'kp' }, 'Diberikan kepada'),
         el('div', { 'class': 'nm' }, c.nama),
-        el('div', { 'class': 'ur' }, 'yang telah menyelesaikan ' + c.tahap + ' tahap inti pada enam wilayah simulasi jaringan komputer dasar, dengan capaian kuis ' + c.skor + '%.'),
+        el('div', { 'class': 'ur' }, 'yang telah menyelesaikan ' + c.tahap + ' tahap inti pada enam wilayah simulasi jaringan komputer dasar, dengan nilai pasca-tes ' + c.skor + '%.'),
         el('div', { 'class': 'ft' },
           el('div', null, el('b', null, 'Diterbitkan'), tglPanjang(c.diterbitkan)),
           el('div', null, el('div', { 'class': 'tt' }, el('b', null, c.penandatangan || c.penerbit), c.penandatangan ? c.penerbit : '')),
@@ -341,9 +511,10 @@
       }
       var ok = function (v) { return v ? '✅ ' : '⬜ '; }, ul = el('ul');
       ul.append(el('li', null, ok(s.tahap_selesai >= s.tahap_total) + 'Tahap inti selesai: ' + s.tahap_selesai + ' dari ' + s.tahap_total),
-        el('li', null, ok(s.skor >= s.min_skor) + 'Jawaban kuis benar pada tahap inti: ' + s.skor + '% (minimal ' + s.min_skor + '%)'),
-        el('li', null, ok(!s.wilayah_kurang.length) + (s.wilayah_kurang.length ? 'Wilayah berbayar yang belum dibuka: ' + s.wilayah_kurang.join(', ') : 'Semua wilayah sudah dibuka')));
+        el('li', null, ok(!s.wilayah_kurang.length) + (s.wilayah_kurang.length ? 'Wilayah berbayar yang belum dibuka: ' + s.wilayah_kurang.join(', ') : 'Semua wilayah sudah dibuka')),
+        el('li', null, ok(s.pasca_lulus) + 'Pasca-tes lulus (minimal ' + s.min_skor + '%)' + (s.pasca_nilai != null ? ', nilai terbaik Anda ' + s.pasca_nilai + '%' : ', belum dikerjakan')));
       b.append(el('p', null, 'Sertifikat diberikan setelah Anda memenuhi seluruh syarat berikut.'), ul);
+      if (!s.pasca_lulus) b.append(btn('Buka halaman Tes', function () { dialogTes(); }));
       if (!s.layak) { b.append(el('p', { style: 'color:var(--mu)' }, 'Teruskan petualangan Anda. Halaman ini akan memperbarui statusnya setiap kali dibuka.')); return; }
       var nm = inp('Nama lengkap pada sertifikat', { maxlength: '80', 'aria-label': 'Nama pada sertifikat', value: PROFIL.nama || '' });
       var yakin = 0, tb = btn('Terbitkan sertifikat', async function () {
@@ -390,12 +561,22 @@
   };
 
   /* ---------- admin (dimuat hanya untuk admin) ---------- */
+  var SKRIP = {};
+  function muatSkrip(src, ada) {
+    if (ada && window[ada]) return Promise.resolve();
+    if (!SKRIP[src]) SKRIP[src] = new Promise(function (ok, gagal) {
+      var s = document.createElement('script'); s.src = src; s.onload = ok;
+      s.onerror = function () { delete SKRIP[src]; gagal(new Error(src + ' tidak dapat dimuat.')); }; document.head.append(s);
+    });
+    return SKRIP[src];
+  }
   function siapkanAdmin() {
     var a = $('#ad'); if (!a || !PROFIL.is_admin) return; a.hidden = false;
-    a.onclick = function () {
-      if (window.adminBuka) return window.adminBuka(ctx());
-      var s = document.createElement('script'); s.src = 'admin.js'; s.onload = function () { window.adminBuka(ctx()); }; s.onerror = function () { toast('admin.js tidak dapat dimuat.'); }; document.head.append(s);
-    };
+    a.onclick = function () { muatSkrip('bersama.js', 'Bersama').then(function () { return muatSkrip('admin.js', 'adminBuka'); }).then(function () { window.adminBuka(ctx()); }).catch(function (e) { toast(errTxt(e)); }); };
+  }
+  function siapkanGuru() {
+    var g = $('#gr'); if (!g || PROFIL.peran !== 'guru') return; g.hidden = false;
+    g.onclick = function () { muatSkrip('bersama.js', 'Bersama').then(function () { return muatSkrip('guru.js', 'guruBuka'); }).then(function () { window.guruBuka(ctx()); }).catch(function (e) { toast(errTxt(e)); }); };
   }
   function ctx() { return { sb: sb, el: el, btn: btn, inp: inp, toast: toast, openOv: openOv, closeOv: closeOv, fmt: fmt, errTxt: errTxt, pengaturan: S, wilayah: W, refresh: async function () { await muatPengaturan(); } }; }
 
@@ -420,7 +601,7 @@
       var u = s.data.session.user;
       if (!emailTerverifikasi(u)) { await sb.auth.signOut(); return layarMasuk('Email akun Anda belum terverifikasi oleh Google. Gunakan akun Google lain.'); }
       UID = u.id; KEY = 'simjar-v3:' + UID;
-      var p = await sb.from('profiles').select('id,email,nama,is_admin,kelas_id,ketentuan_versi').eq('id', UID).maybeSingle();
+      var p = await sb.from('profiles').select('id,email,nama,is_admin,kelas_id,ketentuan_versi,peran,guru_diminta,peran_diatur').eq('id', UID).maybeSingle();
       if (p.error) throw p.error; if (!p.data) throw new Error('Profil belum dibuat. Muat ulang halaman.');
       PROFIL = p.data;
       if (!PROFIL.nama) PROFIL.nama = ((u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || '').slice(0, 80);
@@ -432,7 +613,8 @@
           var m = await muatKemajuan(); restore(m);
           var pos = ST.findIndex(function (x) { return x.id == m.ci; }); go(pos >= 0 ? pos : 0);
           siapkanAdmin(); $('#pt').onclick = function () { dialogPoin(); }; siapkanSertifikat();
-          layarNama();
+          siapkanGuru(); siapkanTes();
+          if (!PROFIL.peran_diatur) layarPeran(layarNama); else layarNama();
         } catch (e) { pesanGalat('Gagal memuat data', e, lanjut); }
       };
       if (PROFIL.ketentuan_versi !== String(S.versi_ketentuan)) layarKetentuan(lanjut); else lanjut();
@@ -443,7 +625,7 @@
       return layar('Aplikasi belum dikonfigurasi', [el('p', null, 'Isi SUPABASE_URL dan SUPABASE_ANON_KEY pada berkas config.js (lihat PANDUAN.md).')]);
     }
     if (!window.supabase || !window.supabase.createClient) {
-      return layar('Pustaka tidak termuat', [el('p', null, 'Pustaka Supabase gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.')]);
+      return layar('Pustaka tidak termuat', [el('p', null, 'Pustaka Supabase gagal dimuat. Periksa koneksi internet lalu muat ulang halaman. Bila Anda pengelola situs: pastikan folder vendor/ (berkas supabase-2.45.4.js) sudah ikut diunggah.')]);
     }
     sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
     window.__CLOUD = { client: sb };
