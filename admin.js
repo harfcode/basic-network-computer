@@ -146,10 +146,25 @@
       var d = await rpc('admin_buat_voucher', { p_jumlah: parseInt(n.value, 10), p_poin: parseInt(p.value, 10), p_kelas: kl.value || null, p_catatan: ct.value || null });
       hasil.innerHTML = ''; hasil.append(C.el('p', null, d.length + ' kode dibuat. Simpan sekarang:'), C.el('textarea', { rows: '6', style: 'width:100%', readonly: 'readonly', 'aria-label': 'Kode voucher' }, d.join('\n')),
         C.btn('Unduh CSV', function () { unduh('voucher.csv', ['kode', 'poin', 'catatan'], d.map(function (k) { return [k, p.value, ct.value]; })); }));
+      await muatDaftar();
     }));
     var bk = C.inp('Kode voucher yang dibatalkan', { 'aria-label': 'Kode dibatalkan' });
-    var bt = C.btn('Batalkan voucher', aman(async function () { var r = await rpc('admin_batalkan_voucher', { p_kode: bk.value }); C.toast(r.pesan || (r.ok ? 'Dibatalkan.' : 'Gagal.')); }));
-    b.append(n, p, ct, kl, buat, hasil, C.el('h4', null, 'Batalkan'), bk, bt);
+    var bt = C.btn('Batalkan voucher', aman(async function () { var r = await rpc('admin_batalkan_voucher', { p_kode: bk.value }); C.toast(r.pesan || (r.ok ? 'Dibatalkan.' : 'Gagal.')); await muatDaftar(); }));
+    var fs = C.el('select', { 'aria-label': 'Saring status voucher' }, C.el('option', { value: '' }, 'Semua status'), C.el('option', { value: 'belum' }, 'Belum dipakai'), C.el('option', { value: 'dipakai' }, 'Sudah dipakai'), C.el('option', { value: 'batal' }, 'Dibatalkan'));
+    var fo = C.el('select', { 'aria-label': 'Saring pembuat voucher' }, C.el('option', { value: '' }, 'Admin dan guru'), C.el('option', { value: 'admin' }, 'Dibuat admin'), C.el('option', { value: 'guru' }, 'Dibuat guru'));
+    var fc = C.inp('Cari kode, catatan, atau kelas', { 'aria-label': 'Cari voucher' }), dl = C.el('div');
+    async function muatDaftar() {
+      var d = await rpc('admin_daftar_voucher', { p_status: fs.value || null, p_sumber: fo.value || null, p_cari: fc.value || null }); dl.innerHTML = '';
+      if (!d.length) { dl.append(C.el('p', null, 'Tidak ada voucher yang cocok.')); return; }
+      var st = { belum: 'belum dipakai', dipakai: 'dipakai', batal: 'dibatalkan' }, tg = function (x) { return x ? new Date(x).toLocaleDateString('id-ID') : '-'; };
+      var baris = d.map(function (v) { return [v.kode, v.poin, v.catatan || '-', v.kelas || 'semua peserta', v.sumber === 'guru' ? 'guru: ' + v.pembuat : 'admin', tg(v.dibuat), st[v.status] || v.status, v.penukar || '-', tg(v.ditukar_pada)]; });
+      dl.append(C.el('p', { role: 'status' }, d.length + ' voucher' + (d.length >= 500 ? ' (500 terbaru)' : '') + '.'), tabel(['Kode', 'Poin', 'Catatan', 'Kelas', 'Dibuat oleh', 'Tanggal buat', 'Status', 'Dipakai oleh', 'Tanggal pakai'], baris),
+        C.el('p'), C.btn('Unduh CSV daftar', function () { unduh('daftar-voucher.csv', ['kode', 'poin', 'catatan', 'kelas', 'dibuat_oleh', 'tanggal_buat', 'status', 'dipakai_oleh', 'tanggal_pakai'], baris); }));
+    }
+    fs.onchange = fo.onchange = function () { muatDaftar().catch(function (e) { C.toast(C.errTxt(e)); }); };
+    var tm = C.btn('Tampilkan daftar', aman(muatDaftar), 'o');
+    b.append(n, p, ct, kl, buat, hasil, C.el('h4', null, 'Batalkan'), bk, bt, C.el('h4', null, 'Daftar voucher'), fs, fo, fc, tm, dl);
+    await muatDaftar();
   }
   async function kelas(b) {
     bagian(b, 'Kelas');
