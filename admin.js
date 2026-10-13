@@ -214,10 +214,49 @@
   }
   window.adminBuka = function (ctx) {
     C = ctx; B = window.Bersama(C); tabel = B.tabel; unduh = B.unduh; rpc = B.rpc; aman = B.aman; bagian = B.bagian; batang = B.batang; tabelDetail = B.tabelDetail; judulTahap = B.judulTahap;
+    B.gaya();
+    var TAB = [
+      { id: 'ringkasan', judul: 'Ringkasan', isi: [statistik] },
+      { id: 'analitik', judul: 'Analitik', isi: [analitik] },
+      { id: 'guru', judul: 'Guru dan kelas', isi: [guruAdmin, kelas, diskonAdmin], lencana: true },
+      { id: 'tes', judul: 'Tes dan soal', isi: [paketBawaan, bankSoal] },
+      { id: 'peserta', judul: 'Peserta dan poin', isi: [peserta, voucher] },
+      { id: 'sertifikat', judul: 'Sertifikat', isi: [sertifikatAdmin] },
+      { id: 'pengaturan', judul: 'Pengaturan', isi: [pengaturan] },
+      { id: 'buku', judul: 'Buku poin dan log', isi: [buku] }
+    ];
     C.openOv('🛠️ Panel pengelola', function (b) {
-      b.append(C.el('p', { style: 'color:var(--mu)' }, 'Setiap perubahan dicatat di log admin. Unduh buku poin (CSV) secara berkala sebagai cadangan.'));
+      b.append(C.el('p', { style: 'color:var(--mu);margin:0 0 6px' }, 'Setiap perubahan dicatat di log admin. Unduh buku poin (CSV) secara berkala sebagai cadangan.'));
+      var bar = C.el('div', { 'class': 'tb-bar', role: 'tablist', 'aria-label': 'Bagian panel pengelola' }), wadah = C.el('div'), tombol = {}, panel = {}, termuat = {};
+      function pilih(id, fokus) {
+        TAB.forEach(function (t) { var on = t.id === id; tombol[t.id].setAttribute('aria-selected', on ? 'true' : 'false'); tombol[t.id].tabIndex = on ? 0 : -1; panel[t.id].hidden = !on; });
+        if (fokus) tombol[id].focus();
+        if (termuat[id]) return; termuat[id] = true;
+        var p = panel[id], t = TAB.filter(function (x) { return x.id === id; })[0]; p.append(C.el('p', { role: 'status' }, 'Memuat…'));
+        (async function () {
+          var tmp = C.el('div');
+          for (var f of t.isi) { try { await f(tmp); } catch (e) { tmp.append(C.el('p', { role: 'alert' }, 'Gagal memuat bagian: ' + C.errTxt(e))); } }
+          p.innerHTML = ''; while (tmp.firstChild) p.append(tmp.firstChild);
+        })();
+      }
+      TAB.forEach(function (t, i) {
+        var x = C.el('button', { type: 'button', role: 'tab', id: 'tb-' + t.id, 'aria-controls': 'tp-' + t.id, 'aria-selected': 'false', 'class': 'tb' }, t.judul);
+        x.onclick = function () { pilih(t.id); };
+        x.onkeydown = function (e) {
+          var k = e.key, j = k === 'ArrowRight' ? i + 1 : k === 'ArrowLeft' ? i - 1 : k === 'Home' ? 0 : k === 'End' ? TAB.length - 1 : -1;
+          if (j < 0) return; e.preventDefault(); pilih(TAB[(j + TAB.length) % TAB.length].id, true);
+        };
+        tombol[t.id] = x; bar.append(x);
+        var p = C.el('div', { role: 'tabpanel', id: 'tp-' + t.id, 'aria-labelledby': 'tb-' + t.id }); p.hidden = true; panel[t.id] = p; wadah.append(p);
+      });
+      b.append(bar, wadah); pilih('ringkasan');
+      // lencana: jumlah permintaan guru dan pengajuan diskon yang menunggu keputusan
       (async function () {
-        for (var f of [statistik, analitik, guruAdmin, diskonAdmin, paketBawaan, bankSoal, sertifikatAdmin, peserta, voucher, kelas, pengaturan, buku]) { try { await f(b); } catch (e) { b.append(C.el('p', { role: 'alert' }, 'Gagal memuat bagian: ' + C.errTxt(e))); } }
+        try {
+          var g = await rpc('admin_daftar_guru', {}), d = await rpc('admin_daftar_diskon', {});
+          var n = g.filter(function (x) { return x.diminta; }).length + d.filter(function (x) { return x.status === 'menunggu'; }).length;
+          if (n) { tombol.guru.textContent = 'Guru dan kelas'; tombol.guru.append(C.el('span', { 'class': 'tb-n', 'aria-label': n + ' menunggu keputusan' }, String(n))); }
+        } catch (e) { /* lencana hanya bantuan */ }
       })();
     });
   };

@@ -40,7 +40,11 @@
         '.pk-s small{color:var(--mu);display:block}.pk-s ol{margin:4px 0 0 18px;padding:0;font-size:13px}',
         '.pk-s li.kn{font-weight:700}',
         '.pk-r{position:sticky;top:0;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:6px 10px;margin:8px 0;z-index:1}',
-        '@media(max-width:520px){.pk-s{grid-template-columns:1fr}}'
+        '@media(max-width:520px){.pk-s{grid-template-columns:1fr}}',
+        '.tb-bar{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 12px;padding:4px 0;border-bottom:2px solid var(--bd);position:sticky;top:0;background:var(--bg);z-index:2}',
+        '.tb-bar .tb{border-radius:8px 8px 0 0;padding:7px 12px;font-size:14px;white-space:nowrap}',
+        '.tb-bar .tb[aria-selected="true"]{background:var(--ac);color:var(--bt);font-weight:700}',
+        '.tb-n{display:inline-block;margin-left:6px;min-width:20px;padding:0 6px;border-radius:10px;background:#c0392b;color:#fff;font-size:12px;line-height:20px;text-align:center}'
       ].join('\n');
       document.head.append(st);
     }
