@@ -95,7 +95,7 @@
       btn('Saya guru / pengajar', async function () {
         try { var r = await sb.rpc('atur_peran', { p_peran: 'guru' }); if (r.error) throw r.error; if (!r.data.ok) { toast(r.data.pesan); return; } }
         catch (e) { toast(errTxt(e)); return; }
-        layar('Permintaan guru tercatat', [el('p', null, 'Admin akan meninjau permintaan Anda. Sampai disetujui, akun Anda berfungsi sebagai siswa mandiri. Setelah disetujui, tombol "Kelas" muncul di bagian atas aplikasi (muat ulang halaman).'), btn('Lanjut', selesai, 'o')]);
+        layar('Permintaan guru tercatat', [el('p', null, 'Admin akan meninjau permintaan Anda. Sampai disetujui, akun Anda berfungsi sebagai siswa mandiri. Setelah disetujui, tombol "Guru" muncul di bagian atas aplikasi (muat ulang halaman).'), btn('Lanjut', selesai, 'o')]);
       })
     ]);
     function layarSiswa() {
@@ -575,7 +575,7 @@
     a.onclick = function () { muatSkrip('bersama.js', 'Bersama').then(function () { return muatSkrip('admin.js', 'adminBuka'); }).then(function () { window.adminBuka(ctx()); }).catch(function (e) { toast(errTxt(e)); }); };
   }
   function siapkanGuru() {
-    var g = $('#gr'); if (!g || PROFIL.peran !== 'guru') return; g.hidden = false;
+    var g = $('#gu'); if (!g || PROFIL.peran !== 'guru') return; g.hidden = false;
     g.onclick = function () { muatSkrip('bersama.js', 'Bersama').then(function () { return muatSkrip('guru.js', 'guruBuka'); }).then(function () { window.guruBuka(ctx()); }).catch(function (e) { toast(errTxt(e)); }); };
   }
   function ctx() { return { sb: sb, el: el, btn: btn, inp: inp, toast: toast, openOv: openOv, closeOv: closeOv, fmt: fmt, errTxt: errTxt, pengaturan: S, wilayah: W, refresh: async function () { await muatPengaturan(); } }; }
