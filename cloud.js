@@ -190,7 +190,7 @@
   }
   async function muatSaldo() { var r = await sb.rpc('saldo_saya'); if (r.error) throw r.error; SALDO = r.data || 0; var sd = $('#sd'); if (sd) sd.textContent = '💰 ' + fmt(SALDO) + ' poin'; }
   async function muatSemuaModul() {
-    var wajib = Object.keys(W).filter(function (id) { return W[id].berkas && (HAK[id] || (PROFIL && (PROFIL.is_admin || PROFIL.peran === 'guru'))); });
+    var wajib = Object.keys(W).filter(function (id) { return W[id].berkas && (HAK[id] || (PROFIL && PROFIL.is_admin)); });
     var gagal = [];
     for (var i = 0; i < wajib.length; i++) { try { await muatModul(+wajib[i]); } catch (e) { gagal.push(W[wajib[i]].nama); } }
     if (gagal.length) toast('Materi belum termuat: ' + gagal.join(', ') + '. Muat ulang halaman.');
@@ -311,7 +311,7 @@
 
   /* ---------- tes: pra-tes dan pasca-tes ---------- */
   function siapkanTes() {
-    var t = $('#ts'); if (!t) return; t.hidden = false; t.onclick = function () { dialogTes(); };
+    var t = tombolHeader('ts', '📝 Tes'); if (!t) return; t.hidden = false; t.onclick = function () { dialogTes(); };
     sb.rpc('tes_status').then(function (r) { if (!r.error && r.data && r.data.pra.ada && !r.data.pra.selesai) t.textContent = '📝 Tes •'; });
   }
   async function dialogTes(pesan) {
@@ -574,8 +574,15 @@
     var a = $('#ad'); if (!a || !PROFIL.is_admin) return; a.hidden = false;
     a.onclick = function () { muatSkrip('bersama.js', 'Bersama').then(function () { return muatSkrip('admin.js', 'adminBuka'); }).then(function () { window.adminBuka(ctx()); }).catch(function (e) { toast(errTxt(e)); }); };
   }
+  /* Bila index.html di server masih versi lama (tanpa tombol ini), tombolnya dibuat di sini agar tidak hilang. */
+  function tombolHeader(id, label) {
+    var b = document.getElementById(id); if (b && b.tagName === 'BUTTON') return b;
+    var pt = $('#pt'); if (!pt) return null;
+    b = el('button', { type: 'button', id: id }, label); pt.after(b); return b;
+  }
   function siapkanGuru() {
-    var g = $('#gu'); if (!g || PROFIL.peran !== 'guru') return; g.hidden = false;
+    if (PROFIL.peran !== 'guru') return;
+    var g = tombolHeader('gu', '👩‍🏫 Guru'); if (!g) return; g.hidden = false;
     g.onclick = function () { muatSkrip('bersama.js', 'Bersama').then(function () { return muatSkrip('guru.js', 'guruBuka'); }).then(function () { window.guruBuka(ctx()); }).catch(function (e) { toast(errTxt(e)); }); };
   }
   function ctx() { return { sb: sb, el: el, btn: btn, inp: inp, toast: toast, openOv: openOv, closeOv: closeOv, fmt: fmt, errTxt: errTxt, pengaturan: S, wilayah: W, refresh: async function () { await muatPengaturan(); } }; }
