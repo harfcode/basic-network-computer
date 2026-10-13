@@ -227,7 +227,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){save();if(
 let rt=0;$('#rs').onclick=function(){if(!rt){rt=1;this.textContent='Yakin? Klik lagi untuk menghapus';setTimeout(()=>{rt=0;this.textContent='Mulai ulang kemajuan'},4000);return}
  for(const k in done)delete done[k];for(const k in qa)delete qa[k];gm={seen:{},inc:{}};if(typeof gReset=='function')gReset();rt=0;this.textContent='Mulai ulang kemajuan';$('#sc').textContent='0/0';go(0)};
 const OV=$('#ov'),OB=$('#ovb'),OT=$('#ovt');let lastF=null;
-function openOv(t,fn){lastF=document.activeElement;OT.textContent=t;OB.innerHTML='';fn(OB);OV.hidden=false;$('#ovx').focus()}
+function openOv(t,fn){lastF=document.activeElement;OT.textContent=t;OB.innerHTML='';OB.style.cssText='';fn(OB);OV.hidden=false;$('#ovx').focus()}
 function closeOv(){OV.hidden=true;if(lastF&&lastF.focus)lastF.focus()}
 $('#ovx').onclick=closeOv;OV.addEventListener('click',e=>{if(e.target===OV)closeOv()});
 document.addEventListener('keydown',e=>{if(OV.hidden)return;if(e.key=='Escape')return closeOv();if(e.key=='Tab'){const f=[...OV.querySelectorAll('button,input,textarea')].filter(x=>!x.disabled);if(!f.length)return;const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement==a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement==z){e.preventDefault();a.focus()}}});

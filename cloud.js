@@ -10,7 +10,8 @@
     'Poin diperoleh dari pengelola (pemberian langsung), voucher, atau kode kelas. Nilai satu poin dan harga wilayah dapat diubah pengelola untuk pembelian berikutnya.',
     'Materi wilayah berbayar hanya untuk penggunaan belajar pribadi. Dilarang menyalin atau menyebarkannya.',
     'Jika Anda menghapus akun, kemajuan dan sisa poin hilang dan tidak dapat dipulihkan. Catatan transaksi tetap disimpan tanpa identitas Anda.',
-    'Pengelola dapat melihat kemajuan belajar peserta yang tergabung dalam kelas yang sama.'
+    'Pengelola dapat melihat kemajuan belajar peserta yang tergabung dalam kelas yang sama, termasuk ringkasan statistik kelas.',
+    'Bila Anda menerbitkan sertifikat, nama pada sertifikat dapat diperiksa siapa saja yang memegang kodenya (hanya nama, tanggal, dan penerbit). Sertifikat dihapus bersama akun dan dapat dicabut pengelola bila terbukti ada kecurangan.'
   ];
   var sb = null, S = {}, W = {}, HAK = {}, PROFIL = null, SALDO = 0, UID = null, TUTUP = false;
   var $ = function (s) { return document.querySelector(s); };
@@ -260,6 +261,122 @@
     });
   }
 
+
+  /* ---------- gaya sertifikat dan verifikasi ---------- */
+  function pasangGaya() {
+    if (document.getElementById('gaya-cloud')) return;
+    var s = document.createElement('style'); s.id = 'gaya-cloud';
+    s.textContent = [
+      '.sert{--ink:#1b2a41;--tl:#0b6b66;--em:#a87a1f;container-type:inline-size;width:100%;aspect-ratio:297/210;background:#fffdf7;color:var(--ink);position:relative;font-family:Georgia,"Times New Roman",serif;box-shadow:0 1px 6px rgba(0,0,0,.25);-webkit-print-color-adjust:exact;print-color-adjust:exact;overflow:hidden}',
+      '.sert *{color:inherit;box-sizing:border-box}',
+      '.sert .bd{position:absolute;inset:3.2cqw;border:.5cqw solid var(--tl);outline:.18cqw solid var(--em);outline-offset:-1.3cqw}',
+      '.sert .is{position:absolute;inset:6.5cqw 9cqw;display:flex;flex-direction:column;align-items:center;text-align:center}',
+      '.sert .lg{width:7cqw;height:auto;margin-top:.5cqw}',
+      '.sert .jd{font-size:4.6cqw;letter-spacing:.5cqw;font-weight:700;color:var(--tl);margin:.8cqw 0 0}',
+      '.sert .sj{font-size:2.1cqw;font-style:italic;margin:.4cqw 0 0}',
+      '.sert .kp{font-size:1.9cqw;margin:2.2cqw 0 .6cqw;letter-spacing:.2cqw}',
+      '.sert .nm{font-size:5.4cqw;font-weight:700;line-height:1.15;border-bottom:.25cqw solid var(--em);padding:0 3cqw .5cqw;max-width:100%;overflow-wrap:anywhere}',
+      '.sert .ur{font-size:2cqw;line-height:1.5;margin:1.8cqw 6cqw 0}',
+      '.sert .ft{margin-top:auto;width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2cqw;font-size:1.55cqw;text-align:center;align-items:end}',
+      '.sert .ft b{display:block;font-size:1.8cqw}',
+      '.sert .tt{border-top:.15cqw solid var(--ink);padding-top:.5cqw;margin:0 2cqw}',
+      '.sert .kd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.9cqw;font-weight:700;letter-spacing:.15cqw}',
+      '.sert .dc{margin-top:1.4cqw;font-size:1.25cqw;font-style:italic;opacity:.85}',
+      '.rot-sert{display:none}',
+      '@media (max-width:640px){.rot-sert{display:block;font-size:13px;color:var(--mu)}}',
+      '@media print{@page{size:A4 landscape;margin:0}',
+      'body.cetak-sert>*:not(#ov){display:none!important}',
+      'body.cetak-sert #ov{position:static;background:none;padding:0;display:block!important}',
+      'body.cetak-sert #ov>div{max-width:none;max-height:none;border:0;padding:0;overflow:visible;background:none;border-radius:0}',
+      'body.cetak-sert #ov>div>*:not(#ovb){display:none!important}',
+      'body.cetak-sert #ovb>*:not(#sert-cetak){display:none!important}',
+      'body.cetak-sert .sert{width:297mm;height:210mm;box-shadow:none;aspect-ratio:auto}}'
+    ].join('\n');
+    document.head.append(s);
+  }
+  function tglPanjang(iso) { try { return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }); } catch (e) { return String(iso).slice(0, 10); } }
+  function tautanVerifikasi(kode) { return location.origin + location.pathname + '?verifikasi=' + encodeURIComponent(kode); }
+  function svgEl(h) { var d = document.createElement('div'); d.innerHTML = h; return d.firstChild; }
+  /* Sertifikat dirender dengan textContent: nama dan teks lain dari server tidak pernah dimasukkan sebagai HTML. */
+  function renderSert(c) {
+    var lg = svgEl('<svg class="lg" viewBox="0 0 60 44" aria-hidden="true"><g stroke="#0b6b66" stroke-width="2.4" stroke-linecap="round"><path d="M30 8L10 34M30 8l20 26M10 34h40" fill="none"/></g><g fill="#fffdf7" stroke="#a87a1f" stroke-width="2.4"><circle cx="30" cy="8" r="5.5"/><circle cx="10" cy="34" r="5.5"/><circle cx="50" cy="34" r="5.5"/></g></svg>');
+    var root = el('div', { 'class': 'sert', id: 'sert-cetak', role: 'img', 'aria-label': 'Sertifikat penyelesaian untuk ' + c.nama + ', kode ' + c.kode },
+      el('div', { 'class': 'bd' }),
+      el('div', { 'class': 'is' }, lg,
+        el('div', { 'class': 'jd' }, 'SERTIFIKAT PENYELESAIAN'),
+        el('div', { 'class': 'sj' }, 'Petualangan Teknisi Jaringan Kampus'),
+        el('div', { 'class': 'kp' }, 'Diberikan kepada'),
+        el('div', { 'class': 'nm' }, c.nama),
+        el('div', { 'class': 'ur' }, 'yang telah menyelesaikan ' + c.tahap + ' tahap inti pada enam wilayah simulasi jaringan komputer dasar, dengan capaian kuis ' + c.skor + '%.'),
+        el('div', { 'class': 'ft' },
+          el('div', null, el('b', null, 'Diterbitkan'), tglPanjang(c.diterbitkan)),
+          el('div', null, el('div', { 'class': 'tt' }, el('b', null, c.penandatangan || c.penerbit), c.penandatangan ? c.penerbit : '')),
+          el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, 'Periksa keaslian: ' + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode))),
+        el('div', { 'class': 'dc' }, 'Sertifikat ini menyatakan penyelesaian materi belajar mandiri. Bukan ijazah, transkrip, atau sertifikasi profesi.')));
+    return root;
+  }
+  function cetakSert() {
+    pasangGaya(); document.body.classList.add('cetak-sert');
+    var hapus = function () { document.body.classList.remove('cetak-sert'); window.removeEventListener('afterprint', hapus); };
+    window.addEventListener('afterprint', hapus);
+    try { window.print(); } catch (e) { hapus(); toast('Pencetakan tidak tersedia di peramban ini.'); }
+  }
+  async function dialogSertifikat(pesan) {
+    pasangGaya();
+    try { await window.cloudFlush(); } catch (e) {}
+    var r = await sb.rpc('syarat_sertifikat');
+    if (r.error) { toast('Gagal memuat status sertifikat: ' + errTxt(r.error)); return; }
+    var s = r.data, c = s.sertifikat;
+    openOv('🎓 Sertifikat', function (b) {
+      if (pesan) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pesan));
+      if (c && c.dicabut) { b.append(el('p', { role: 'alert', style: 'font-weight:700' }, '⚠️ Sertifikat Anda (kode ' + c.kode + ') telah dicabut oleh pengelola. Hubungi pengelola kelas bila ini keliru.')); return; }
+      if (c) {
+        b.append(renderSert(c), el('p', { 'class': 'rot-sert' }, 'Tip: putar ponsel ke mode mendatar agar sertifikat lebih besar.'));
+        var url = tautanVerifikasi(c.kode);
+        b.append(el('p'), btn('🖨️ Cetak / simpan sebagai PDF', cetakSert),
+          btn('Salin tautan pemeriksaan', async function () { try { await navigator.clipboard.writeText(url); toast('Tautan disalin.'); } catch (e) { toast(url); } }),
+          el('p', { style: 'color:var(--mu);font-size:14px' }, 'Pada jendela cetak, pilih "Simpan sebagai PDF" dan kertas A4 mendatar. Siapa pun dapat memeriksa keaslian sertifikat lewat tautan atau kode di atas.'));
+        return;
+      }
+      var ok = function (v) { return v ? '✅ ' : '⬜ '; }, ul = el('ul');
+      ul.append(el('li', null, ok(s.tahap_selesai >= s.tahap_total) + 'Tahap inti selesai: ' + s.tahap_selesai + ' dari ' + s.tahap_total),
+        el('li', null, ok(s.skor >= s.min_skor) + 'Jawaban kuis benar pada tahap inti: ' + s.skor + '% (minimal ' + s.min_skor + '%)'),
+        el('li', null, ok(!s.wilayah_kurang.length) + (s.wilayah_kurang.length ? 'Wilayah berbayar yang belum dibuka: ' + s.wilayah_kurang.join(', ') : 'Semua wilayah sudah dibuka')));
+      b.append(el('p', null, 'Sertifikat diberikan setelah Anda memenuhi seluruh syarat berikut.'), ul);
+      if (!s.layak) { b.append(el('p', { style: 'color:var(--mu)' }, 'Teruskan petualangan Anda. Halaman ini akan memperbarui statusnya setiap kali dibuka.')); return; }
+      var nm = inp('Nama lengkap pada sertifikat', { maxlength: '80', 'aria-label': 'Nama pada sertifikat', value: PROFIL.nama || '' });
+      var yakin = 0, tb = btn('Terbitkan sertifikat', async function () {
+        var n = nm.value.trim(); if (n.length < 3) { toast('Isi nama minimal 3 huruf.'); return; }
+        if (!yakin) { yakin = 1; tb.textContent = 'Yakin? Nama tidak dapat diubah. Klik lagi untuk menerbitkan'; setTimeout(function () { yakin = 0; tb.textContent = 'Terbitkan sertifikat'; }, 5000); return; }
+        tb.disabled = true;
+        try { var x = await sb.rpc('terbitkan_sertifikat', { p_nama: n }); if (x.error) throw x.error; if (!x.data.ok) { toast(x.data.pesan); tb.disabled = false; return; } dialogSertifikat('Sertifikat berhasil diterbitkan.'); }
+        catch (e) { tb.disabled = false; toast('Gagal menerbitkan: ' + errTxt(e)); }
+      });
+      b.append(el('p', null, '🎉 Anda memenuhi syarat. Periksa penulisan nama Anda, karena nama tidak dapat diubah setelah sertifikat diterbitkan.'), nm, el('p'), tb);
+    });
+  }
+  function siapkanSertifikat() {
+    var pt = $('#pt'); if (!pt || $('#sr')) return;
+    var b = el('button', { type: 'button', id: 'sr' }, '🎓 Sertifikat'); b.onclick = function () { dialogSertifikat(); }; pt.after(b);
+  }
+
+  /* ---------- verifikasi publik (?verifikasi=KODE), tanpa perlu masuk ---------- */
+  function layarVerifikasi(kode, lanjut) {
+    var kin = inp('Kode sertifikat (contoh: ABCDE-23456)', { 'aria-label': 'Kode sertifikat', maxlength: '20', value: kode || '' }), hasil = el('div', { role: 'status', 'aria-live': 'polite' });
+    var cek = async function () {
+      hasil.textContent = 'Memeriksa…';
+      try {
+        var r = await sb.rpc('cek_sertifikat', { p_kode: kin.value }); if (r.error) throw r.error; var d = r.data; hasil.innerHTML = '';
+        if (!d.ok) hasil.append(el('p', { style: 'font-weight:700' }, '❌ Kode tidak ditemukan. Periksa penulisan kode.'));
+        else if (d.dicabut) hasil.append(el('p', { style: 'font-weight:700' }, '⚠️ Sertifikat ini telah dicabut oleh penerbit.'), el('p', null, 'Atas nama: ' + d.nama));
+        else hasil.append(el('p', { style: 'font-weight:700' }, '✅ Sertifikat sah'), el('p', null, 'Atas nama: ', el('b', null, d.nama)), el('p', null, 'Diterbitkan: ' + tglPanjang(d.tanggal) + ' oleh ' + d.penerbit));
+      } catch (e) { hasil.textContent = 'Gagal memeriksa: ' + errTxt(e); }
+    };
+    kin.addEventListener('keydown', function (e) { if (e.key === 'Enter') cek(); });
+    layar('Pemeriksaan sertifikat', [el('p', null, 'Masukkan kode yang tertera pada sertifikat.'), kin, btn('Periksa', cek, 'o'), hasil, el('p'), btn('Buka aplikasi', function () { history.replaceState(null, '', location.pathname); lanjut(); })]);
+    if (kode) cek();
+  }
+
   /* ---------- keluar ---------- */
   function bersihkan() {
     TUTUP = true; clearTimeout(timer);
@@ -313,7 +430,7 @@
           await muatSemuaModul();
           var m = await muatKemajuan(); restore(m);
           var pos = ST.findIndex(function (x) { return x.id == m.ci; }); go(pos >= 0 ? pos : 0);
-          siapkanAdmin(); $('#pt').onclick = function () { dialogPoin(); };
+          siapkanAdmin(); $('#pt').onclick = function () { dialogPoin(); }; siapkanSertifikat();
           layarNama();
         } catch (e) { pesanGalat('Gagal memuat data', e, lanjut); }
       };
@@ -331,6 +448,8 @@
     window.__CLOUD = { client: sb };
     document.addEventListener('visibilitychange', function () { if (!document.hidden && UID && !TUTUP) { /* gabung kemajuan dari perangkat lain */ muatKemajuan().then(function (m) { restore(gabung(payload(), m)); if (typeof upd === 'function') upd(); }).catch(function () {}); } });
     sb.auth.onAuthStateChange(function (ev) { if (ev === 'SIGNED_OUT' && UID && !TUTUP) { TUTUP = true; location.reload(); } });
+    var vk = new URLSearchParams(location.search).get('verifikasi');
+    if (vk !== null) return layarVerifikasi(vk, mulai);
     mulai();
   }
   if (window.gReady) init(); else window.addEventListener('load', init);
