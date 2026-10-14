@@ -473,7 +473,6 @@
       '.sert .ft b{display:block;font-size:1.8cqw}',
       '.sert .tt{border-top:.15cqw solid var(--ink);padding-top:.5cqw;margin:0 2cqw}',
       '.sert .kd{white-space:nowrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.9cqw;font-weight:700;letter-spacing:.15cqw}',
-      '.sert .ttd{display:block;height:6cqw;max-width:20cqw;object-fit:contain;margin:0 auto -.6cqw}',
       '.sert .vf{display:flex;gap:1.6cqw;align-items:flex-end;justify-content:flex-end;text-align:right}',
       '.sert .ds{font-size:1.1cqw;margin-top:.3cqw;opacity:.85}',
       '.sert .ft>div>.qr{margin:0 auto .8cqw}',
@@ -495,14 +494,13 @@
   function tglPanjang(iso) { try { return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }); } catch (e) { return String(iso).slice(0, 10); } }
   function waktuPanjang(detik) { try { return new Date(detik * 1000).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).replace(/\./g, ':') + ' WIB'; } catch (e) { return String(detik); } }
   function detikDari(iso) { return Math.floor(new Date(String(iso).replace(/(\.\d{3})\d+/, '$1')).getTime() / 1000); }
-  function modeTtd() { return (window.APP_IDENTITAS || {}).tandaTangan === 'gambar' ? 'gambar' : 'qr'; }
   /* Isi kode QR tanda tangan digital: tautan pemeriksaan + kode sertifikat + nama penandatangan + waktu terbit (detik UNIX). */
   function isiTtd(c) { return tautanVerifikasi(c.kode) + '&ttd=' + encodeURIComponent(c.penandatangan || c.penerbit) + '&t=' + detikDari(c.diterbitkan); }
   function tautanVerifikasi(kode) { return location.origin + location.pathname + '?verifikasi=' + encodeURIComponent(kode); }
   function svgEl(h) { var d = document.createElement('div'); d.innerHTML = h; return d.firstChild; }
   /* Sertifikat dirender dengan textContent: nama dan teks lain dari server tidak pernah dimasukkan sebagai HTML. */
-  function renderSert(c, ttd, qrSvg) {
-    var mQr = modeTtd() === 'qr', pen = c.penandatangan || c.penerbit, tdet = detikDari(c.diterbitkan);
+  function renderSert(c, qrSvg) {
+    var pen = c.penandatangan || c.penerbit, tdet = detikDari(c.diterbitkan);
     var lg = svgEl('<svg class="lg" viewBox="0 0 60 44" aria-hidden="true"><g stroke="#0b6b66" stroke-width="2.4" stroke-linecap="round"><path d="M30 8L10 34M30 8l20 26M10 34h40" fill="none"/></g><g fill="#fffdf7" stroke="#a87a1f" stroke-width="2.4"><circle cx="30" cy="8" r="5.5"/><circle cx="10" cy="34" r="5.5"/><circle cx="50" cy="34" r="5.5"/></g></svg>');
     var I = window.APP_IDENTITAS || {}, tx = function (k, d) { return typeof I[k] === 'string' && I[k] !== '' ? I[k] : d; };
     if (I.logo && /^[\w.\/-]+\.(png|svg|jpe?g|webp)$/i.test(I.logo)) { lg = el('img', { 'class': 'lg', src: I.logo, alt: I.logoAlt || '' }); lg.style.height = (Number(I.logoTinggi) > 0 ? Number(I.logoTinggi) : 7.5) + 'cqw'; lg.style.width = 'auto'; }
@@ -517,8 +515,8 @@
         el('div', { 'class': 'ur' }, uraian),
         el('div', { 'class': 'ft' },
           el('div', null, el('b', null, 'Diterbitkan'), tglPanjang(c.diterbitkan)),
-          el('div', null, mQr ? (qrSvg || null) : (ttd ? el('img', { 'class': 'ttd', src: ttd, alt: 'Tanda tangan ' + pen }) : null), el('div', { 'class': 'tt' }, el('b', null, pen), c.penandatangan ? c.penerbit : ''), mQr ? el('div', { 'class': 'ds' }, 'Ditandatangani digital · ' + waktuPanjang(tdet)) : null),
-          el('div', { 'class': 'vf' }, !mQr && qrSvg ? qrSvg : null, el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, (qrSvg ? 'Pindai kode QR tanda tangan atau periksa di: ' : 'Periksa keaslian: ') + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode)))),
+          el('div', null, qrSvg || null, el('div', { 'class': 'tt' }, el('b', null, pen), c.penandatangan ? c.penerbit : ''), el('div', { 'class': 'ds' }, 'Ditandatangani digital · ' + waktuPanjang(tdet))),
+          el('div', { 'class': 'vf' }, el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, (qrSvg ? 'Pindai kode QR tanda tangan atau periksa di: ' : 'Periksa keaslian di: ') + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode)))),
         el('div', { 'class': 'dc' }, tx('catatan', 'Sertifikat ini menyatakan penyelesaian materi belajar mandiri. Bukan ijazah, transkrip, atau sertifikasi profesi.'))));
     return root;
   }
@@ -533,17 +531,15 @@
     try { await window.cloudFlush(); } catch (e) {}
     var r = await sb.rpc('syarat_sertifikat');
     if (r.error) { toast('Gagal memuat status sertifikat: ' + errTxt(r.error)); return; }
-    var s = r.data, c = s.sertifikat, ttd = null, qr = null;
+    var s = r.data, c = s.sertifikat, qr = null;
     if (c && !c.dicabut) {
-      var mq = modeTtd() === 'qr';
-      if (!mq) { try { var tr = await sb.rpc('gambar_ttd_sertifikat'); if (!tr.error && typeof tr.data === 'string' && /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(tr.data)) ttd = tr.data; } catch (e) {} }
-      try { await Promise.race([muatSkrip('vendor/qrcode-generator-1.4.4.js', 'qrcode'), new Promise(function (_, no) { setTimeout(function () { no(new Error('QR terlalu lama dimuat')); }, 5000); })]); var q = window.qrcode(0, 'M'); q.addData(mq ? isiTtd(c) : tautanVerifikasi(c.kode)); q.make(); var h = svgEl(q.createSvgTag({ scalable: true, margin: 0 })); h.setAttribute('aria-hidden', 'true'); qr = el('div', { 'class': 'qr' }, h); } catch (e) { qr = null; }
+      try { await Promise.race([muatSkrip('vendor/qrcode-generator-1.4.4.js', 'qrcode'), new Promise(function (_, no) { setTimeout(function () { no(new Error('QR terlalu lama dimuat')); }, 5000); })]); var q = window.qrcode(0, 'M'); q.addData(isiTtd(c)); q.make(); var h = svgEl(q.createSvgTag({ scalable: true, margin: 0 })); h.setAttribute('aria-hidden', 'true'); qr = el('div', { 'class': 'qr' }, h); } catch (e) { qr = null; }
     }
     openOv('🎓 Sertifikat', function (b) {
       if (pesan) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pesan));
       if (c && c.dicabut) { b.append(el('p', { role: 'alert', style: 'font-weight:700' }, '⚠️ Sertifikat Anda (kode ' + c.kode + ') telah dicabut oleh pengelola. Hubungi pengelola kelas bila ini keliru.')); return; }
       if (c) {
-        b.append(renderSert(c, ttd, qr), el('p', { 'class': 'rot-sert' }, 'Tip: putar ponsel ke mode mendatar agar sertifikat lebih besar.'));
+        b.append(renderSert(c, qr), el('p', { 'class': 'rot-sert' }, 'Tip: putar ponsel ke mode mendatar agar sertifikat lebih besar.'));
         var url = tautanVerifikasi(c.kode);
         b.append(el('p'), btn('🖨️ Cetak / simpan sebagai PDF', cetakSert),
           btn('Salin tautan pemeriksaan', async function () { try { await navigator.clipboard.writeText(url); toast('Tautan disalin.'); } catch (e) { toast(url); } }),

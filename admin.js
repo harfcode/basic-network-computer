@@ -208,60 +208,6 @@
     baris('transfer_aktif', 'Pemindahan poin antarpeserta', 'bool'); baris('transfer_min', 'Pemindahan: minimal poin', 'num'); baris('transfer_maks_harian', 'Pemindahan: maksimal poin per hari', 'num'); baris('transfer_tahan_jam', 'Pemindahan: masa tahan poin baru (jam)', 'num');
     baris('versi_ketentuan', 'Versi ketentuan (ubah = semua peserta diminta menyetujui ulang)', 'str');
     baris('sertifikat_min_skor', 'Nilai minimal pasca-tes untuk lulus dan berhak sertifikat (%)', 'num'); baris('harga_pascates', 'Harga pasca-tes (poin per percobaan, sebelum diskon kelas)', 'num'); baris('pascates_maks_percobaan', 'Batas percobaan pasca-tes per peserta', 'num'); baris('pascates_menit', 'Timer pasca-tes: durasi pengerjaan dalam menit, sama untuk semua kelas (0 = tanpa timer, maksimal 240)', 'num'); baris('sertifikat_penerbit', 'Sertifikat: nama penerbit (tercetak pada sertifikat baru)', 'str'); baris('sertifikat_penandatangan', 'Sertifikat: nama penandatangan (boleh kosong)', 'str');
-    var ttdBox = C.el('div'); b.append(C.el('h4', null, 'Tanda tangan penandatangan sertifikat'), ttdBox);
-    (function () {
-      var nm = C.inp('Nama penandatangan (harus sama persis dengan isian "nama penandatangan" di atas)', { maxlength: '80', 'aria-label': 'Nama pemilik tanda tangan' }); nm.value = S.sertifikat_penandatangan || '';
-      var fl = C.el('input', { type: 'file', accept: 'image/png,image/jpeg,image/webp', 'aria-label': 'Berkas gambar tanda tangan' }), pv = C.el('div', { role: 'status', 'aria-live': 'polite' }), daftar = C.el('div'), data = null;
-      /* Gambar diproses di peramban: latar putih dibuat transparan, dipangkas, diperkecil (maks 600 px lebar), lalu disimpan sebagai PNG. */
-      function proses(file) {
-        return new Promise(function (ok, no) {
-          var u = URL.createObjectURL(file), im = new Image();
-          im.onerror = function () { URL.revokeObjectURL(u); no(new Error('Gambar tidak dapat dibaca.')); };
-          im.onload = function () {
-            URL.revokeObjectURL(u);
-            var k = Math.min(1, 1200 / Math.max(im.width, im.height)), w = Math.max(1, Math.round(im.width * k)), h = Math.max(1, Math.round(im.height * k)), cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-            var cx = cv.getContext('2d'); cx.drawImage(im, 0, 0, w, h); var px = cx.getImageData(0, 0, w, h), d = px.data, x0 = w, y0 = h, x1 = -1, y1 = -1;
-            for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
-              var i = (y * w + x) * 4, mn = Math.min(d[i], d[i + 1], d[i + 2]), a = d[i + 3] / 255, gelap = 255 - mn, al = Math.max(0, Math.min(255, (gelap - 14) * 255 / 70)) * a;
-              if (al > 0) { var f = al / 255; for (var c = 0; c < 3; c++) d[i + c] = Math.max(0, Math.min(255, (d[i + c] - 255 * (1 - f)) / f)); }
-              d[i + 3] = al; if (al > 30) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-            }
-            if (x1 < 0) { no(new Error('Tidak ada goresan tanda tangan yang terdeteksi. Pakai tinta gelap di atas kertas putih.')); return; }
-            cx.putImageData(px, 0, 0); var cw = x1 - x0 + 1, ch = y1 - y0 + 1, s2 = Math.min(1, 600 / cw), ow = Math.max(1, Math.round(cw * s2)), oh = Math.max(1, Math.round(ch * s2)), o = document.createElement('canvas'); o.width = ow; o.height = oh;
-            o.getContext('2d').drawImage(cv, x0, y0, cw, ch, 0, 0, ow, oh); ok(o.toDataURL('image/png'));
-          };
-          im.src = u;
-        });
-      }
-      fl.onchange = function () {
-        data = null; pv.textContent = ''; if (!fl.files[0]) return;
-        pv.textContent = 'Memproses gambar…';
-        proses(fl.files[0]).then(function (u) {
-          if (u.length > 190000) { pv.textContent = 'Gambar terlalu detail setelah diproses. Gunakan gambar yang lebih sederhana.'; return; }
-          data = u; pv.textContent = 'Pratinjau (latar sudah dibuat transparan): '; var im = C.el('img', { src: u, alt: 'Pratinjau tanda tangan', style: 'max-height:80px;background:#fffdf7;border:1px solid var(--bd);vertical-align:middle' }); pv.append(im);
-        }).catch(function (e) { pv.textContent = C.errTxt(e); });
-      };
-      var simpan = C.btn('Simpan tanda tangan', aman(async function () {
-        if (!data) { C.toast('Pilih gambar tanda tangan dahulu.'); return; }
-        var r = await rpc('admin_simpan_ttd', { p_nama: nm.value, p_gambar: data }); C.toast(r.ok ? 'Tanda tangan tersimpan.' : r.pesan); if (r.ok) { fl.value = ''; data = null; pv.textContent = ''; await muat(); }
-      }), 'o');
-      async function muat() {
-        var d = await rpc('admin_daftar_ttd', {}); daftar.innerHTML = '';
-        if (!d.length) { daftar.append(C.el('p', null, 'Belum ada tanda tangan tersimpan.')); return; }
-        d.forEach(function (t) {
-          daftar.append(C.el('div', { style: 'border-top:1px solid var(--bd);padding:6px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap' },
-            C.el('img', { src: t.gambar, alt: 'Tanda tangan ' + t.nama, style: 'max-height:60px;max-width:180px;background:#fffdf7;border:1px solid var(--bd)' }),
-            C.el('span', null, C.el('b', null, t.nama), ' · dipakai di ' + t.dipakai + ' sertifikat · disimpan ' + new Date(t.dibuat).toLocaleDateString('id-ID')),
-            C.btn('Hapus', aman(async function () {
-              if (!window.confirm('Hapus tanda tangan ' + t.nama + '? ' + t.dipakai + ' sertifikat yang memakainya akan tampil tanpa tanda tangan.')) return;
-              var r = await rpc('admin_hapus_ttd', { p_id: t.id }); C.toast(r.ok ? 'Dihapus.' : r.pesan); await muat();
-            }))));
-        });
-      }
-      ttdBox.append(C.el('p', { style: 'color:var(--mu)' }, 'Tanda tangan dipasang pada sertifikat yang atas nama penandatangannya sama dengan nama di sini, saat sertifikat diterbitkan, dan tetap melekat walau penandatangan diganti kemudian. Sertifikat lama atas nama yang sama ikut dipasangi saat tanda tangan disimpan. Foto atau pindai tanda tangan dengan tinta gelap di kertas putih. Ingat: tanda tangan akan tampil di sertifikat yang dicetak peserta, jadi pakai versi yang memang boleh disebarkan.'),
-        C.el('p', null, C.el('label', null, 'Nama ', nm)), C.el('p', null, C.el('label', null, 'Gambar ', fl)), pv, simpan, daftar);
-      muat().catch(function (e) { daftar.append(C.el('p', { role: 'alert' }, C.errTxt(e))); });
-    })();
     b.append(C.el('h4', null, 'Harga wilayah (poin) dan versi berkas'));
     Object.keys(W).map(Number).sort().forEach(function (id) {
       var w = W[id]; if (w.gratis) { b.append(C.el('p', null, 'Wilayah ' + id + ' ' + w.nama + ': gratis')); return; }

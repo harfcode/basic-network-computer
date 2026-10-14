@@ -2,6 +2,7 @@
 // Untuk aplikasi lain (mis. keamanan komputer): salin seluruh folder web/, lalu ganti isi berkas ini dan logo.png.
 // Catatan: teks sertifikat tidak disimpan di basis data, jadi perubahan di sini berlaku juga untuk sertifikat yang sudah terbit.
 // Nama penerbit dan penandatangan diatur di panel admin (Pengaturan), bukan di sini.
+// Tanda tangan pada sertifikat berupa kode QR digital (nama penandatangan, waktu terbit, kode sertifikat) dan dibuat otomatis.
 window.APP_IDENTITAS = {
   // Logo di bagian atas sertifikat: nama berkas gambar di folder yang sama (PNG/SVG, sebaiknya berlatar transparan).
   // Kosongkan ('') untuk memakai gambar bawaan.
@@ -9,10 +10,6 @@ window.APP_IDENTITAS = {
   logoAlt: 'harfcode',
   // Tinggi logo dalam satuan lebar sertifikat (angka lebih besar = logo lebih besar).
   logoTinggi: 7.5,
-
-  // Tanda tangan penandatangan: 'qr' = tanda tangan digital berupa kode QR (nama penandatangan, waktu terbit, kode sertifikat), 'gambar' = gambar tanda tangan unggahan admin
-  // (Admin > Pengaturan) dengan kode QR pemeriksaan di kolom kode.
-  tandaTangan: 'qr',
 
   judul: 'SERTIFIKAT PENYELESAIAN',
   subjudul: 'Petualangan Teknisi Jaringan Kampus',
