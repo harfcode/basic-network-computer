@@ -463,16 +463,20 @@
       '.sert *{color:inherit;box-sizing:border-box}',
       '.sert .bd{position:absolute;inset:3.2cqw;border:.5cqw solid var(--tl);outline:.18cqw solid var(--em);outline-offset:-1.3cqw}',
       '.sert .is{position:absolute;inset:6.5cqw 9cqw;display:flex;flex-direction:column;align-items:center;text-align:center}',
-      '.sert .lg{width:7cqw;height:auto;margin-top:.5cqw}',
+      '.sert .lg{width:7cqw;height:auto;margin-top:.5cqw;max-width:40cqw;object-fit:contain}',
       '.sert .jd{font-size:4.6cqw;letter-spacing:.5cqw;font-weight:700;color:var(--tl);margin:.8cqw 0 0}',
       '.sert .sj{font-size:2.1cqw;font-style:italic;margin:.4cqw 0 0}',
       '.sert .kp{font-size:1.9cqw;margin:2.2cqw 0 .6cqw;letter-spacing:.2cqw}',
       '.sert .nm{font-size:5.4cqw;font-weight:700;line-height:1.15;border-bottom:.25cqw solid var(--em);padding:0 3cqw .5cqw;max-width:100%;overflow-wrap:anywhere}',
       '.sert .ur{font-size:2cqw;line-height:1.5;margin:1.8cqw 6cqw 0}',
-      '.sert .ft{margin-top:auto;width:100%;display:grid;grid-template-columns:1fr 1fr 1fr;gap:2cqw;font-size:1.55cqw;text-align:center;align-items:end}',
+      '.sert .ft{margin-top:auto;width:100%;display:grid;grid-template-columns:.9fr 1.3fr 1.8fr;gap:2cqw;font-size:1.55cqw;text-align:center;align-items:end}',
       '.sert .ft b{display:block;font-size:1.8cqw}',
       '.sert .tt{border-top:.15cqw solid var(--ink);padding-top:.5cqw;margin:0 2cqw}',
-      '.sert .kd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.9cqw;font-weight:700;letter-spacing:.15cqw}',
+      '.sert .kd{white-space:nowrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.9cqw;font-weight:700;letter-spacing:.15cqw}',
+      '.sert .ttd{display:block;height:6cqw;max-width:20cqw;object-fit:contain;margin:0 auto -.6cqw}',
+      '.sert .vf{display:flex;gap:1.6cqw;align-items:flex-end;justify-content:flex-end;text-align:right}',
+      '.sert .qr{width:11cqw;height:11cqw;flex:none;background:#fff;padding:.6cqw;border:.12cqw solid var(--ink)}',
+      '.sert .qr svg{display:block;width:100%;height:100%}',
       '.sert .dc{margin-top:1.4cqw;font-size:1.25cqw;font-style:italic;opacity:.85}',
       '.rot-sert{display:none}',
       '@media (max-width:640px){.rot-sert{display:block;font-size:13px;color:var(--mu)}}',
@@ -490,21 +494,24 @@
   function tautanVerifikasi(kode) { return location.origin + location.pathname + '?verifikasi=' + encodeURIComponent(kode); }
   function svgEl(h) { var d = document.createElement('div'); d.innerHTML = h; return d.firstChild; }
   /* Sertifikat dirender dengan textContent: nama dan teks lain dari server tidak pernah dimasukkan sebagai HTML. */
-  function renderSert(c) {
+  function renderSert(c, ttd, qrSvg) {
     var lg = svgEl('<svg class="lg" viewBox="0 0 60 44" aria-hidden="true"><g stroke="#0b6b66" stroke-width="2.4" stroke-linecap="round"><path d="M30 8L10 34M30 8l20 26M10 34h40" fill="none"/></g><g fill="#fffdf7" stroke="#a87a1f" stroke-width="2.4"><circle cx="30" cy="8" r="5.5"/><circle cx="10" cy="34" r="5.5"/><circle cx="50" cy="34" r="5.5"/></g></svg>');
+    var I = window.APP_IDENTITAS || {}, tx = function (k, d) { return typeof I[k] === 'string' && I[k] !== '' ? I[k] : d; };
+    if (I.logo && /^[\w.\/-]+\.(png|svg|jpe?g|webp)$/i.test(I.logo)) { lg = el('img', { 'class': 'lg', src: I.logo, alt: I.logoAlt || '' }); lg.style.height = (Number(I.logoTinggi) > 0 ? Number(I.logoTinggi) : 7.5) + 'cqw'; lg.style.width = 'auto'; }
+    var uraian = tx('uraian', 'yang telah menyelesaikan {tahap} tahap inti pada enam wilayah simulasi jaringan komputer dasar, dengan nilai pasca-tes {skor}%.').replace(/\{tahap\}/g, c.tahap).replace(/\{skor\}/g, c.skor);
     var root = el('div', { 'class': 'sert', id: 'sert-cetak', role: 'img', 'aria-label': 'Sertifikat penyelesaian untuk ' + c.nama + ', kode ' + c.kode },
       el('div', { 'class': 'bd' }),
       el('div', { 'class': 'is' }, lg,
-        el('div', { 'class': 'jd' }, 'SERTIFIKAT PENYELESAIAN'),
-        el('div', { 'class': 'sj' }, 'Petualangan Teknisi Jaringan Kampus'),
-        el('div', { 'class': 'kp' }, 'Diberikan kepada'),
+        el('div', { 'class': 'jd' }, tx('judul', 'SERTIFIKAT PENYELESAIAN')),
+        el('div', { 'class': 'sj' }, tx('subjudul', 'Petualangan Teknisi Jaringan Kampus')),
+        el('div', { 'class': 'kp' }, tx('pengantar', 'Diberikan kepada')),
         el('div', { 'class': 'nm' }, c.nama),
-        el('div', { 'class': 'ur' }, 'yang telah menyelesaikan ' + c.tahap + ' tahap inti pada enam wilayah simulasi jaringan komputer dasar, dengan nilai pasca-tes ' + c.skor + '%.'),
+        el('div', { 'class': 'ur' }, uraian),
         el('div', { 'class': 'ft' },
           el('div', null, el('b', null, 'Diterbitkan'), tglPanjang(c.diterbitkan)),
-          el('div', null, el('div', { 'class': 'tt' }, el('b', null, c.penandatangan || c.penerbit), c.penandatangan ? c.penerbit : '')),
-          el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, 'Periksa keaslian: ' + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode))),
-        el('div', { 'class': 'dc' }, 'Sertifikat ini menyatakan penyelesaian materi belajar mandiri. Bukan ijazah, transkrip, atau sertifikasi profesi.')));
+          el('div', null, ttd ? el('img', { 'class': 'ttd', src: ttd, alt: 'Tanda tangan ' + (c.penandatangan || c.penerbit) }) : null, el('div', { 'class': 'tt' }, el('b', null, c.penandatangan || c.penerbit), c.penandatangan ? c.penerbit : '')),
+          el('div', { 'class': 'vf' }, qrSvg ? qrSvg : null, el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, (qrSvg ? 'Pindai kode QR atau periksa di: ' : 'Periksa keaslian: ') + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode)))),
+        el('div', { 'class': 'dc' }, tx('catatan', 'Sertifikat ini menyatakan penyelesaian materi belajar mandiri. Bukan ijazah, transkrip, atau sertifikasi profesi.'))));
     return root;
   }
   function cetakSert() {
@@ -518,12 +525,16 @@
     try { await window.cloudFlush(); } catch (e) {}
     var r = await sb.rpc('syarat_sertifikat');
     if (r.error) { toast('Gagal memuat status sertifikat: ' + errTxt(r.error)); return; }
-    var s = r.data, c = s.sertifikat;
+    var s = r.data, c = s.sertifikat, ttd = null, qr = null;
+    if (c && !c.dicabut) {
+      try { var tr = await sb.rpc('gambar_ttd_sertifikat'); if (!tr.error && typeof tr.data === 'string' && /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(tr.data)) ttd = tr.data; } catch (e) {}
+      try { await Promise.race([muatSkrip('vendor/qrcode-generator-1.4.4.js', 'qrcode'), new Promise(function (_, no) { setTimeout(function () { no(new Error('QR terlalu lama dimuat')); }, 5000); })]); var q = window.qrcode(0, 'M'); q.addData(tautanVerifikasi(c.kode)); q.make(); var h = svgEl(q.createSvgTag({ scalable: true, margin: 0 })); h.setAttribute('aria-hidden', 'true'); qr = el('div', { 'class': 'qr' }, h); } catch (e) { qr = null; }
+    }
     openOv('🎓 Sertifikat', function (b) {
       if (pesan) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pesan));
       if (c && c.dicabut) { b.append(el('p', { role: 'alert', style: 'font-weight:700' }, '⚠️ Sertifikat Anda (kode ' + c.kode + ') telah dicabut oleh pengelola. Hubungi pengelola kelas bila ini keliru.')); return; }
       if (c) {
-        b.append(renderSert(c), el('p', { 'class': 'rot-sert' }, 'Tip: putar ponsel ke mode mendatar agar sertifikat lebih besar.'));
+        b.append(renderSert(c, ttd, qr), el('p', { 'class': 'rot-sert' }, 'Tip: putar ponsel ke mode mendatar agar sertifikat lebih besar.'));
         var url = tautanVerifikasi(c.kode);
         b.append(el('p'), btn('🖨️ Cetak / simpan sebagai PDF', cetakSert),
           btn('Salin tautan pemeriksaan', async function () { try { await navigator.clipboard.writeText(url); toast('Tautan disalin.'); } catch (e) { toast(url); } }),
