@@ -475,7 +475,9 @@
       '.sert .kd{white-space:nowrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.9cqw;font-weight:700;letter-spacing:.15cqw}',
       '.sert .ttd{display:block;height:6cqw;max-width:20cqw;object-fit:contain;margin:0 auto -.6cqw}',
       '.sert .vf{display:flex;gap:1.6cqw;align-items:flex-end;justify-content:flex-end;text-align:right}',
-      '.sert .qr{width:9.5cqw;height:9.5cqw;flex:none;background:#fff;padding:.6cqw;border:.12cqw solid var(--ink)}',
+      '.sert .ds{font-size:1.1cqw;margin-top:.3cqw;opacity:.85}',
+      '.sert .ft>div>.qr{margin:0 auto .8cqw}',
+      '.sert .qr{width:11.5cqw;height:11.5cqw;flex:none;background:#fff;padding:.6cqw;border:.12cqw solid var(--ink)}',
       '.sert .qr svg{display:block;width:100%;height:100%}',
       '.sert .dc{margin-top:1cqw;font-size:1.25cqw;font-style:italic;opacity:.85}',
       '.rot-sert{display:none}',
@@ -491,10 +493,16 @@
     document.head.append(s);
   }
   function tglPanjang(iso) { try { return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' }); } catch (e) { return String(iso).slice(0, 10); } }
+  function waktuPanjang(detik) { try { return new Date(detik * 1000).toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jakarta' }).replace(/\./g, ':') + ' WIB'; } catch (e) { return String(detik); } }
+  function detikDari(iso) { return Math.floor(new Date(String(iso).replace(/(\.\d{3})\d+/, '$1')).getTime() / 1000); }
+  function modeTtd() { return (window.APP_IDENTITAS || {}).tandaTangan === 'gambar' ? 'gambar' : 'qr'; }
+  /* Isi kode QR tanda tangan digital: tautan pemeriksaan + kode sertifikat + nama penandatangan + waktu terbit (detik UNIX). */
+  function isiTtd(c) { return tautanVerifikasi(c.kode) + '&ttd=' + encodeURIComponent(c.penandatangan || c.penerbit) + '&t=' + detikDari(c.diterbitkan); }
   function tautanVerifikasi(kode) { return location.origin + location.pathname + '?verifikasi=' + encodeURIComponent(kode); }
   function svgEl(h) { var d = document.createElement('div'); d.innerHTML = h; return d.firstChild; }
   /* Sertifikat dirender dengan textContent: nama dan teks lain dari server tidak pernah dimasukkan sebagai HTML. */
   function renderSert(c, ttd, qrSvg) {
+    var mQr = modeTtd() === 'qr', pen = c.penandatangan || c.penerbit, tdet = detikDari(c.diterbitkan);
     var lg = svgEl('<svg class="lg" viewBox="0 0 60 44" aria-hidden="true"><g stroke="#0b6b66" stroke-width="2.4" stroke-linecap="round"><path d="M30 8L10 34M30 8l20 26M10 34h40" fill="none"/></g><g fill="#fffdf7" stroke="#a87a1f" stroke-width="2.4"><circle cx="30" cy="8" r="5.5"/><circle cx="10" cy="34" r="5.5"/><circle cx="50" cy="34" r="5.5"/></g></svg>');
     var I = window.APP_IDENTITAS || {}, tx = function (k, d) { return typeof I[k] === 'string' && I[k] !== '' ? I[k] : d; };
     if (I.logo && /^[\w.\/-]+\.(png|svg|jpe?g|webp)$/i.test(I.logo)) { lg = el('img', { 'class': 'lg', src: I.logo, alt: I.logoAlt || '' }); lg.style.height = (Number(I.logoTinggi) > 0 ? Number(I.logoTinggi) : 7.5) + 'cqw'; lg.style.width = 'auto'; }
@@ -509,8 +517,8 @@
         el('div', { 'class': 'ur' }, uraian),
         el('div', { 'class': 'ft' },
           el('div', null, el('b', null, 'Diterbitkan'), tglPanjang(c.diterbitkan)),
-          el('div', null, ttd ? el('img', { 'class': 'ttd', src: ttd, alt: 'Tanda tangan ' + (c.penandatangan || c.penerbit) }) : null, el('div', { 'class': 'tt' }, el('b', null, c.penandatangan || c.penerbit), c.penandatangan ? c.penerbit : '')),
-          el('div', { 'class': 'vf' }, qrSvg ? qrSvg : null, el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, (qrSvg ? 'Pindai kode QR atau periksa di: ' : 'Periksa keaslian: ') + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode)))),
+          el('div', null, mQr ? (qrSvg || null) : (ttd ? el('img', { 'class': 'ttd', src: ttd, alt: 'Tanda tangan ' + pen }) : null), el('div', { 'class': 'tt' }, el('b', null, pen), c.penandatangan ? c.penerbit : ''), mQr ? el('div', { 'class': 'ds' }, 'Ditandatangani digital · ' + waktuPanjang(tdet)) : null),
+          el('div', { 'class': 'vf' }, !mQr && qrSvg ? qrSvg : null, el('div', null, el('b', null, 'Kode sertifikat'), el('span', { 'class': 'kd' }, c.kode), el('div', null, (qrSvg ? 'Pindai kode QR tanda tangan atau periksa di: ' : 'Periksa keaslian: ') + location.host + location.pathname.replace(/index\.html$/, '') + '?verifikasi=' + c.kode)))),
         el('div', { 'class': 'dc' }, tx('catatan', 'Sertifikat ini menyatakan penyelesaian materi belajar mandiri. Bukan ijazah, transkrip, atau sertifikasi profesi.'))));
     return root;
   }
@@ -527,8 +535,9 @@
     if (r.error) { toast('Gagal memuat status sertifikat: ' + errTxt(r.error)); return; }
     var s = r.data, c = s.sertifikat, ttd = null, qr = null;
     if (c && !c.dicabut) {
-      try { var tr = await sb.rpc('gambar_ttd_sertifikat'); if (!tr.error && typeof tr.data === 'string' && /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(tr.data)) ttd = tr.data; } catch (e) {}
-      try { await Promise.race([muatSkrip('vendor/qrcode-generator-1.4.4.js', 'qrcode'), new Promise(function (_, no) { setTimeout(function () { no(new Error('QR terlalu lama dimuat')); }, 5000); })]); var q = window.qrcode(0, 'M'); q.addData(tautanVerifikasi(c.kode)); q.make(); var h = svgEl(q.createSvgTag({ scalable: true, margin: 0 })); h.setAttribute('aria-hidden', 'true'); qr = el('div', { 'class': 'qr' }, h); } catch (e) { qr = null; }
+      var mq = modeTtd() === 'qr';
+      if (!mq) { try { var tr = await sb.rpc('gambar_ttd_sertifikat'); if (!tr.error && typeof tr.data === 'string' && /^data:image\/png;base64,[A-Za-z0-9+\/=]+$/.test(tr.data)) ttd = tr.data; } catch (e) {} }
+      try { await Promise.race([muatSkrip('vendor/qrcode-generator-1.4.4.js', 'qrcode'), new Promise(function (_, no) { setTimeout(function () { no(new Error('QR terlalu lama dimuat')); }, 5000); })]); var q = window.qrcode(0, 'M'); q.addData(mq ? isiTtd(c) : tautanVerifikasi(c.kode)); q.make(); var h = svgEl(q.createSvgTag({ scalable: true, margin: 0 })); h.setAttribute('aria-hidden', 'true'); qr = el('div', { 'class': 'qr' }, h); } catch (e) { qr = null; }
     }
     openOv('🎓 Sertifikat', function (b) {
       if (pesan) b.append(el('p', { role: 'status', style: 'font-weight:700' }, pesan));
@@ -574,7 +583,16 @@
         var r = await sb.rpc('cek_sertifikat', { p_kode: kin.value }); if (r.error) throw r.error; var d = r.data; hasil.innerHTML = '';
         if (!d.ok) hasil.append(el('p', { style: 'font-weight:700' }, '❌ Kode tidak ditemukan. Periksa penulisan kode.'));
         else if (d.dicabut) hasil.append(el('p', { style: 'font-weight:700' }, '⚠️ Sertifikat ini telah dicabut oleh penerbit.'), el('p', null, 'Atas nama: ' + d.nama));
-        else hasil.append(el('p', { style: 'font-weight:700' }, '✅ Sertifikat sah'), el('p', null, 'Atas nama: ', el('b', null, d.nama)), el('p', null, 'Diterbitkan: ' + tglPanjang(d.tanggal) + ' oleh ' + d.penerbit));
+        else {
+          hasil.append(el('p', { style: 'font-weight:700' }, '✅ Sertifikat sah'), el('p', null, 'Atas nama: ', el('b', null, d.nama)), el('p', null, 'Diterbitkan: ' + tglPanjang(d.tanggal) + ' oleh ' + d.penerbit));
+          if (d.penandatangan && d.waktu) hasil.append(el('p', null, 'Ditandatangani digital oleh ', el('b', null, d.penandatangan), ' pada ' + waktuPanjang(d.waktu) + '.'));
+          var qp = new URLSearchParams(location.search), qt = qp.get('ttd'), qw = qp.get('t');
+          var norm = function (x) { return String(x || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+          if ((qt != null || qw != null) && norm(qp.get('verifikasi')) === norm(kin.value)) {
+            var cocok = qt === d.penandatangan && String(qw) === String(d.waktu);
+            hasil.append(el('p', { role: cocok ? 'status' : 'alert', style: 'font-weight:700' }, cocok ? '✅ Data pada kode QR tanda tangan cocok dengan catatan penerbit.' : '❌ Data pada kode QR (penandatangan atau waktu) TIDAK cocok dengan catatan penerbit. Jangan percaya sertifikat ini sebelum dikonfirmasi ke penerbit.'));
+          }
+        }
       } catch (e) { hasil.textContent = 'Gagal memeriksa: ' + errTxt(e); }
     };
     kin.addEventListener('keydown', function (e) { if (e.key === 'Enter') cek(); });

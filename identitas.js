@@ -10,6 +10,10 @@ window.APP_IDENTITAS = {
   // Tinggi logo dalam satuan lebar sertifikat (angka lebih besar = logo lebih besar).
   logoTinggi: 7.5,
 
+  // Tanda tangan penandatangan: 'qr' = tanda tangan digital berupa kode QR (nama penandatangan, waktu terbit, kode sertifikat), 'gambar' = gambar tanda tangan unggahan admin
+  // (Admin > Pengaturan) dengan kode QR pemeriksaan di kolom kode.
+  tandaTangan: 'qr',
+
   judul: 'SERTIFIKAT PENYELESAIAN',
   subjudul: 'Petualangan Teknisi Jaringan Kampus',
   pengantar: 'Diberikan kepada',
